@@ -22,7 +22,7 @@ class Client:
 
     def add_experiments(self, folder):
         if not os.path.exists(folder):
-            logging.error(f'Could not find any experiments in: "{folder}"', file=sys.stderr)
+            logging.error(f'Could not find any experiments in: "{folder}"')
 
         for root, _, files in os.walk(folder):
             for file in files:
