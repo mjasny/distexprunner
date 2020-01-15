@@ -3,11 +3,10 @@ import time
 import config
 
 
-experiment.add_server('node1', '127.0.0.1', custom_field=42)
-experiment.add_server('node2', '127.0.0.1', config.SERVER_PORT+1)
-
-
 class exp1(experiment.Base):
+    SERVERS = [
+        experiment.Server('node1', '127.0.0.1', custom_field=42)
+    ]
     def experiment(self):
         long_cmd = self.target('node1').run_cmd('sleep 4', stdout=experiment.Printer(), stderr=experiment.Printer())
 
@@ -21,6 +20,9 @@ class exp1(experiment.Base):
 
 
 class exp2(experiment.Base):
+    SERVERS = exp1.SERVERS + [
+        experiment.Server('node2', '127.0.0.1', config.SERVER_PORT+1)
+    ]
     def experiment(self):
         self.target('node1').run_cmd('sleep 5', stdout=experiment.Printer(), stderr=experiment.Printer())
         self.target('node2').run_cmd('sleep 10', stdout=experiment.Printer(), stderr=experiment.Printer()).wait()

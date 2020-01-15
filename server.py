@@ -9,7 +9,6 @@ from xmlrpc.server import SimpleXMLRPCServer
 from utils import ServerInstance
 
 
-
 class Server:
     def __init__(self, port=config.SERVER_PORT):
         self.rpc_server = SimpleXMLRPCServer(('0.0.0.0', port), allow_none=True, logRequests=False)

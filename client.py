@@ -2,9 +2,12 @@
 
 import os
 import sys
+import argparse
 import importlib.util
-
 import logging
+import fnmatch
+
+import config
 import experiment
 
 
@@ -13,8 +16,9 @@ class Client:
         self.experiments = []
 
     def run(self):
-        for experiment in self.experiments:
-            experiment()
+        for Experiment in self.experiments:
+            experiment = Experiment()
+            experiment.run()
 
     def add_experiments(self, folder):
         if not os.path.exists(folder):
@@ -29,7 +33,11 @@ class Client:
                 experiments = self.__experiments_from_file(os.path.join(root, file))
                 self.experiments.extend(experiments)
 
-                    
+
+    def filter_experiments(self, filter_str):
+        self.experiments = filter(lambda x: fnmatch.fnmatch(x.__name__, filter_str), self.experiments)
+
+
     def __experiments_from_file(self, file):
         spec = importlib.util.spec_from_file_location(file, file)
         module = importlib.util.module_from_spec(spec)
@@ -43,11 +51,17 @@ class Client:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Distributed Experiment Runner Client Instance')
+    parser.add_argument('--filter', nargs='?', type=str, help='filter experiments by name')
+    parser.add_argument('folder', nargs='?', type=str, default=config.CLIENT_EXPERIMENT_FOLDER, help='experiment folder')
+    args = parser.parse_args()
+
     logging.basicConfig(format='[%(asctime)s]: %(message)s', level=logging.DEBUG)
 
     client = Client()
 
-    folder = 'experiments/' if len(sys.argv) < 2 else sys.argv[1]
-    client.add_experiments(folder)
+    client.add_experiments(args.folder)
+    if args.filter:
+        client.filter_experiments(args.filter)
 
     client.run()
