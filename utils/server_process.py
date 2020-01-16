@@ -41,6 +41,7 @@ class ServerProcess(threading.Thread):
         self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=0, shell=False)
 
         self.p.wait()
+        self.rc = self.p.returncode
         logging.info(f'Cmd {self.id} ({self.cmd}) exited with: {self.p.returncode}')
 
         try:
@@ -53,13 +54,27 @@ class ServerProcess(threading.Thread):
         stderr.close()
 
     def stdin(self, line):
-        # assert(self.p is not None)
-        while self.p is None:   # TODO better solution
-            time.sleep(0.01)
+        if self.rc:
+            raise Exception(f'Process alreading terminated could not send stdin: {line}')
+
+        self.__wait_for_p()
         self.p.stdin.write(line)
         self.p.stdin.flush()
 
+
+    def kill(self):
+        if self.rc:
+            return
+
+        self.__wait_for_p()
+        self.p.kill()
+        self.p.wait()
+
+
+    def __wait_for_p(self):
+        while self.p is None:   # TODO better solution, wait for unstarted process
+            time.sleep(0.01)
+
+
     def cleanup(self):
-        if self.rc != None:
-            self.p.kill()
-            self.p.wait()
+        self.kill()

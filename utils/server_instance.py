@@ -26,3 +26,10 @@ class ServerInstance:
         if isinstance(line, str):
             line = line.encode()
         self.__processes[cmd_id].stdin(line)
+
+
+    def kill_cmd(self, cmd_id):
+        if cmd_id not in self.__processes:
+            return False
+            
+        self.__processes[cmd_id].kill()

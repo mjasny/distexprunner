@@ -60,7 +60,7 @@ class Base:
 
         self.__init()
         self.__connect()
-        self.experiment()
+        self.experiment(self.__target)
         self.__disconnect()
 
 
@@ -101,14 +101,14 @@ class Base:
         self.experiment_client_instance._clear_handlers()
    
 
-    def target(self, node_id):
+    def __target(self, node_id):
         if node_id not in self.proxies:
             raise Exception(f'No connection found to: {node_id}')
-        return ExperimentTarget(self.proxies[node_id], self.experiment_client_instance)
 
-
-    def info(self, node_id):
         server = next(filter(lambda x: x.id == node_id, self.SERVERS), None)
         if server is None:
             raise Exception(f'No info for node: {node_id}')
-        return AttrDict(server.data)
+
+        return ExperimentTarget(self.proxies[node_id], self.experiment_client_instance, AttrDict(server.data))
+
+        
