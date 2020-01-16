@@ -5,7 +5,7 @@ import threading
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
 
-from utils import ExperimentClientInstance, ExperimentTarget, AttrDict
+from utils import ExperimentClientInstance, ExperimentTarget
 
 
 class Server:
@@ -111,6 +111,6 @@ class Base:
         if server is None:
             raise Exception(f'No info for node: {node_id}')
 
-        return ExperimentTarget(self.proxies[node_id], self.experiment_client_instance, AttrDict(server.data))
+        return ExperimentTarget(self.proxies[node_id], self.experiment_client_instance, server)
 
         
