@@ -5,7 +5,7 @@ import threading
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
 
-from utils import ExperimentClientInstance, ExperimentTarget
+from utils import ExperimentClientInstance, ExperimentTarget, AttrDict
 
 
 class Server:
@@ -13,7 +13,7 @@ class Server:
         self.id = id
         self.ip = ip
         self.port = port
-        self.data = kwargs
+        self.data = AttrDict(kwargs)
 
 
 class Printer:

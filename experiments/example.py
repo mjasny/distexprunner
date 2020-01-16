@@ -11,7 +11,8 @@ class exp1(experiment.Base):
         long_cmd = target('node1').run_cmd('sleep 4', stdout=experiment.Printer(), stderr=experiment.Printer())
 
         target('node1').run_cmd('ls', stdout=experiment.Logfile('ls.log', append=True))
-        # print(target('node1').data.custom_field)
+        # self.SERVERS[0].data.custom_field = 69
+        # print(target('node1').server.data.custom_field)
 
         printer = experiment.Printer(fmt='stdin="{line}"\n', rstrip=True)
         cmd = target('node1').run_cmd('bash -c "read p && echo $p"', stdout=printer)
