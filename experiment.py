@@ -63,6 +63,8 @@ class Base:
         self.experiment(self.__target)
         self.__disconnect()
 
+        logging.info(f'Finished: {self.__class__.__name__}')
+
 
     def experiment(self):
         raise Exception(f'{self.__class__.__name__}.experiment() not implemented')
