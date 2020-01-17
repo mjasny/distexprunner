@@ -33,6 +33,8 @@ class Client:
                 experiments = self.__experiments_from_file(os.path.join(root, file))
                 self.experiments.extend(experiments)
 
+        self.experiments.sort(key=lambda x: x.__name__)
+
 
     def filter_experiments(self, filters):
         fn = lambda x: any(fnmatch.fnmatch(x.__name__, f) for f in filters)
