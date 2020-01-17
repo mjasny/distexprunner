@@ -1,3 +1,6 @@
+import logging
+import threading
+import time
 from utils import ServerProcess
 
 
@@ -12,7 +15,13 @@ class ServerInstance:
         for p in self.__processes.values():
             p.cleanup()
         self.__processes.clear()
-        # TODO wait for all threads to terminate
+
+        while len(threading.enumerate()) > 1:
+            logging.info('Threads still running:')
+            for x in threading.enumerate():
+                logging.info(x)
+            time.sleep(0.5)
+        logging.info('Server cleanup complete')
 
     def run_cmd(self, cmd_id, cmd, callback_addr):
         assert(cmd_id not in self.__processes)
