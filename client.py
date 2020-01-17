@@ -34,8 +34,9 @@ class Client:
                 self.experiments.extend(experiments)
 
 
-    def filter_experiments(self, filter_str):
-        self.experiments = filter(lambda x: fnmatch.fnmatch(x.__name__, filter_str), self.experiments)
+    def filter_experiments(self, filters):
+        fn = lambda x: any(fnmatch.fnmatch(x.__name__, f) for f in filters)
+        self.experiments = filter(fn, self.experiments)
 
 
     def __experiments_from_file(self, file):
@@ -52,7 +53,7 @@ class Client:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Distributed Experiment Runner Client Instance')
-    parser.add_argument('--filter', nargs='?', type=str, help='filter experiments by name')
+    parser.add_argument('--filter', action='append', type=str, help='filter experiments by name')
     parser.add_argument('folder', nargs='?', type=str, default=config.CLIENT_EXPERIMENT_FOLDER, help='experiment folder')
     args = parser.parse_args()
 
