@@ -12,5 +12,7 @@ class ExperimentClientInstance:
     def _dispatch(self, method, params):
         cmd_id = params[0]
         params = params[1:]
+        if cmd_id not in self.__handlers:
+            return
         handler = self.__handlers[cmd_id]
         return getattr(handler, f'_{method}')(*params)
