@@ -58,10 +58,14 @@ class Base:
 
         logging.info(f'Executing: {self.__class__.__name__}')
 
-        self.__init()
-        self.__connect()
-        self.experiment(self.__target)
-        self.__disconnect()
+        try:
+            self.__init()
+            self.__connect()
+            self.experiment(self.__target)
+        except KeyboardInterrupt:
+            raise
+        finally:
+            self.__disconnect()
 
         logging.info(f'Finished: {self.__class__.__name__}')
 
