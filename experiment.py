@@ -70,7 +70,7 @@ class Base:
         logging.info(f'Finished: {self.__class__.__name__}')
 
 
-    def experiment(self):
+    def experiment(self, target):
         raise Exception(f'{self.__class__.__name__}.experiment() not implemented')
 
     
