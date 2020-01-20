@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import logging
 import fnmatch
+import re
 
 import config
 import experiment
@@ -33,7 +34,17 @@ class Client:
                 experiments = self.__experiments_from_file(os.path.join(root, file))
                 self.experiments.extend(experiments)
 
-        self.experiments.sort(key=lambda x: x.__name__)
+
+        def atof(text):
+            try:
+                return float(text)
+            except ValueError:
+                return text
+
+        def natural_keys(text):
+            return [atof(c) for c in re.split(r'[+-]?([0-9]+(?:[.][0-9]*)?|[.][0-9]+)', text)]
+
+        self.experiments.sort(key=lambda x: natural_keys(x.__name__))
 
 
     def filter_experiments(self, filters):
