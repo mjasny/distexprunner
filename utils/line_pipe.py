@@ -16,6 +16,7 @@ class LinePipe(threading.Thread):
 
     def run(self):
         for line in iter(self.pipeReader.readline, ''):
+            print(line, end='')
             self.callback(line)
         self.pipeReader.close()
 
