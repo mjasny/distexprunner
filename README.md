@@ -42,7 +42,7 @@ class exp2(experiment.Base):
         procs = []
         for s in self.SERVERS:
             printer = experiment.Printer(fmt=f'{s.id}: '+'{line}')
-            p = target('node1').run_cmd('sleep 10', stdout=printer, stderr=printer)
+            p = target(s.id).run_cmd('sleep 10', stdout=printer, stderr=printer)
             procs.append(p)
 
         rcs = [proc.wait() for proc in procs]
@@ -63,7 +63,43 @@ If the `experiment()` function returns before processes are terminated they are 
 
 All experiments which are found in the experiment folder on the client-side are sorted numerically `['a_1', 'a_2', 'a_10', ...]` and executed in order.
 
+
+### Experiment Factory
+
 A factory pattern can be used to do parameterized grid executions and experiment classes need to be registered in the `global()` scope.
+
+```python
+def exp3_factory(a, b):
+    class exp3(experiment.Base):
+        SERVERS = [
+            experiment.Server('node', '127.0.0.1')
+        ]
+        def experiment(self, target):
+            cmd = f'./foobar -a {a} -b {b}'
+            print(cmd)
+
+    return exp3
+
+
+a = ['x', 'y']
+b = range(5, 10)
+for params in itertools.product(a, b):
+    suffix = '_'.join(map(str, params))
+    cls = exp3_factory(*params)
+    cls.__name__ = f'exp3_{suffix}'
+    globals()[cls.__name__] = cls
+    del cls
+```
+
+This generates the following set of experiments:
+
+```
+experiments = [
+    exp3_a_5, exp3_a_6, exp3_a_7, exp3_a_8, exp3_a_9, 
+    exp3_b_5, exp3_b_6, exp3_b_7, exp3_b_8, exp3_b_9,
+    exp3_c_5, exp3_c_6, exp3_c_7, exp3_c_8, exp3_c_9
+]
+```
 
 ## Client
 

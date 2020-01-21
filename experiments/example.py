@@ -1,4 +1,5 @@
 import experiment
+import itertools
 import time
 import config
 
@@ -29,3 +30,26 @@ class exp2(experiment.Base):
     def experiment(self, target):
         target('node1').run_cmd('sleep 5', stdout=experiment.Printer(), stderr=experiment.Printer())
         target('node2').run_cmd('sleep 10', stdout=experiment.Printer(), stderr=experiment.Printer()).wait()
+
+
+
+def exp3_factory(a, b):
+    class exp3(experiment.Base):
+        SERVERS = [
+            experiment.Server('node', '127.0.0.1')
+        ]
+        def experiment(self, target):
+            cmd = f'./foobar -a {a} -b {b}'
+            print(cmd)
+
+    return exp3
+
+
+a = ['x', 'y']
+b = range(5, 10)
+for params in itertools.product(a, b):
+    suffix = '_'.join(map(str, params))
+    cls = exp3_factory(*params)
+    cls.__name__ = f'exp3_{suffix}'
+    globals()[cls.__name__] = cls
+    del cls
