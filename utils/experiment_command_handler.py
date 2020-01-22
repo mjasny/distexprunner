@@ -1,24 +1,25 @@
 import threading
+import collections
 import xmlrpc.client
 
 
 class ExperimentCommandHandler:
-    def __init__(self, proxy, cmd_id, stdout, stderr):
+    def __init__(self, proxy, cmd_id, stdout=[], stderr=[]):
         self.__proxy = proxy
         self.__cmd_id = cmd_id
-        self.__stdout = stdout
-        self.__stderr = stderr
+        self.__stdout = stdout if isinstance(stdout, collections.Iterable) else [stdout]
+        self.__stderr = stderr if isinstance(stderr, collections.Iterable) else [stderr]
         self.__rc = None
         self.lock = threading.Lock()
         self.cond = threading.Condition()
 
     def _cmd_stdout(self, line):
-        if self.__stdout is not None:
-            self.__stdout(line)
+        for handler in self.__stdout:
+            handler(line)
 
     def _cmd_stderr(self, line):
-        if self.__stderr is not None:
-            self.__stderr(line)
+        for handler in self.__stderr:
+            handler(line)
 
     def _cmd_rc(self, rc):
         with self.cond:

@@ -11,7 +11,7 @@ class exp1(experiment.Base):
     def experiment(self, target):
         long_cmd = target('node1').run_cmd('sleep 4', stdout=experiment.Printer(), stderr=experiment.Printer())
 
-        target('node1').run_cmd('ls', stdout=experiment.Logfile('ls.log', append=True))
+        target('node1').run_cmd('ls', stdout=[experiment.Printer(), experiment.Logfile('ls.log', append=True)])
         # self.SERVERS[0].data.custom_field = 69
         # print(target('node1').data().custom_field)
 
