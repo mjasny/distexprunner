@@ -28,8 +28,16 @@ class exp2(experiment.Base):
         experiment.Server('node2', '127.0.0.1', config.SERVER_PORT+1)
     ]
     def experiment(self, target):
-        target('node1').run_cmd('sleep 5', stdout=experiment.Printer(), stderr=experiment.Printer())
-        target('node2').run_cmd('sleep 10', stdout=experiment.Printer(), stderr=experiment.Printer()).wait()
+        procs = []
+        for i, s in enumerate(self.SERVERS):
+            try:
+                p = target(s.id).run_cmd(f'sleep {5*(i+1)}', stdout=experiment.Printer(), stderr=experiment.Printer())
+            except experiment.errors.NoConnectionError:
+                continue
+            procs.append(p)
+
+        rcs = [proc.wait() for proc in procs]
+        assert(all(rc == 0 for rc in rcs))
 
 
 

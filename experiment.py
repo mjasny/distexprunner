@@ -8,6 +8,13 @@ import xmlrpc.client
 from utils import ExperimentClientInstance, ExperimentTarget, AttrDict
 
 
+
+class errors:
+    class NoConnectionError(Exception):
+        pass
+
+
+
 class Server:
     def __init__(self, id, ip, port=config.SERVER_PORT, **kwargs):
         self.id = id
@@ -109,7 +116,7 @@ class Base:
 
     def __target(self, node_id):
         if node_id not in self.proxies:
-            raise Exception(f'No connection found to: {node_id}')
+            raise errors.NoConnectionError(f'No connection found to: {node_id}')
 
         server = next(filter(lambda x: x.id == node_id, self.SERVERS), None)
         if server is None:
