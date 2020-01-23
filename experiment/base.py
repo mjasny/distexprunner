@@ -25,6 +25,9 @@ class Base:
         if len(self.SERVERS) == 0:
             raise Exception(f'{self.__class__.__name__}.SERVERS is empty')
 
+        if len(self.SERVERS) != len(set((s.ip, s.port) for s in self.SERVERS)):
+            raise Exception(f'Got duplicates in {self.__class__.__name__}.SERVERS (s.ip, s.port)')
+
         logging.info(f'Executing: {self.__class__.__name__}')
 
         try:
