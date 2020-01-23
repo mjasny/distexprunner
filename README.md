@@ -26,6 +26,7 @@ Now a client is ready to connect to the servers and execute experiments.
 
 The folder parameter (`experiments/`) is the default path to recursively search for experiments.
 
+*Note: For readability all commands only list the required executeable instead of the full path. In a current setup it would be e.g. `python3 distexprunner/server.py --port`*
 
 ## Writing experiments
 
@@ -66,7 +67,7 @@ All experiments which are found in the experiment folder on the client-side are 
 
 ### Experiment Factory
 
-A factory pattern can be used to do parameterized grid executions and experiment classes need to be registered in the `global()` scope.
+A factory pattern can be used to do parameterized grid executions. The factory is called for the kartesian product (`itertools.product`) of all parameters (e.g. `a` and `b`).
 
 ```python
 def exp3_factory(a, b):
@@ -83,12 +84,7 @@ def exp3_factory(a, b):
 
 a = ['x', 'y']
 b = range(5, 10)
-for params in itertools.product(a, b):
-    suffix = '_'.join(map(str, params))
-    cls = exp3_factory(*params)
-    cls.__name__ = f'exp3_{suffix}'
-    globals()[cls.__name__] = cls
-    del cls
+experiment.factory.Grid(exp3_factory, a, b)
 ```
 
 This generates the following set of experiments:
@@ -100,6 +96,13 @@ experiments = [
     exp3_c_5, exp3_c_6, exp3_c_7, exp3_c_8, exp3_c_9
 ]
 ```
+
+
+## Usage
+
+An example setup can be found in [experiments/example.py](experiments/example.py).
+Please not that a common practice is to include a compile experiment named `AA_Compile` with the optional server feature which is run always before other experiments to make use of the newest program version. It can then also be used in a double filter setup, e.g. `python client.py --filter=AA_Compile --filter=<name>`.
+
 
 ## Client
 
@@ -133,9 +136,3 @@ optional arguments:
 ```
 
 - `port` defaults to value specified in `config.py`
-
-
-### TODO
-- Support for optionally connected server (needed for Compile-Jobs)
-- Easier experiment factory usage
-- Extend Readme

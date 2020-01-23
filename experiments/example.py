@@ -1,5 +1,4 @@
 import experiment
-import itertools
 import time
 import config
 
@@ -55,9 +54,4 @@ def exp3_factory(a, b):
 
 a = ['x', 'y']
 b = range(5, 10)
-for params in itertools.product(a, b):
-    suffix = '_'.join(map(str, params))
-    cls = exp3_factory(*params)
-    cls.__name__ = f'exp3_{suffix}'
-    globals()[cls.__name__] = cls
-    del cls
+experiment.factory.Grid(exp3_factory, a, b)

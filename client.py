@@ -34,6 +34,7 @@ class Client:
                 experiments = self.__experiments_from_file(os.path.join(root, file))
                 self.experiments.extend(experiments)
 
+        self.experiments.extend(experiment.factory.generated_experiments)
 
         def atof(text):
             try:
