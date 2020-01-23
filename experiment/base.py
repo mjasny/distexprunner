@@ -30,8 +30,8 @@ class Base:
 
         logging.info(f'Executing: {self.__class__.__name__}')
 
+        self.__init()
         try:
-            self.__init()
             self.__connect()
             self.experiment(self.__target)
         except KeyboardInterrupt:
@@ -76,6 +76,7 @@ class Base:
         self.proxies.clear()
         self.rpc_server.shutdown()
         self.rpc_server_thread.join()
+        del self.rpc_server
         self.experiment_client_instance._clear_handlers()
    
 
