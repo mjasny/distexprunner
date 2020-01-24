@@ -4,8 +4,23 @@ import xmlrpc.client
 import subprocess
 import time
 import shlex
+import functools
 
 from utils import LinePipe
+
+
+class LineProxy:
+    def __init__(self, id, method, addr):
+        self.proxy = xmlrpc.client.ServerProxy(addr)
+        self.remote = functools.partial(getattr(self.proxy, method), id)
+    
+    def __call__(self, line):
+        if self.proxy is None:
+            return
+        try:
+            self.remote(line)
+        except ConnectionRefusedError:
+            self.proxy = None
 
 
 class ServerProcess(threading.Thread):
@@ -20,25 +35,12 @@ class ServerProcess(threading.Thread):
         self.daemon = False
         self.start()
 
-    def cmd_stdout(self, l):
-        try:
-            with xmlrpc.client.ServerProxy(self.callback_addr) as proxy:
-                proxy.cmd_stdout(self.id, l)
-        except ConnectionRefusedError:
-            pass
-
-    def cmd_stderr(self, l):
-        try:
-            with xmlrpc.client.ServerProxy(self.callback_addr) as proxy:
-                proxy.cmd_stderr(self.id, l)
-        except ConnectionRefusedError:
-            pass
     
     def run(self):
         logging.info(f'Running cmd: {self.cmd}')
-        stdout = LinePipe(callback=self.cmd_stdout) #TODO change to partial
-        stderr = LinePipe(callback=self.cmd_stderr)
-        self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=0, shell=False)
+        stdout = LinePipe(callback=LineProxy(self.id, 'cmd_stdout', self.callback_addr)) #TODO change to partial
+        stderr = LinePipe(callback=LineProxy(self.id, 'cmd_stderr', self.callback_addr))
+        self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=1, shell=False)
 
         self.p.wait()
         self.rc = self.p.returncode
