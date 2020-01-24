@@ -40,7 +40,7 @@ class Base:
             sys.exit(1)
         finally:
             self.__disconnect()
-´
+
         logging.info(f'Finished: {self.__class__.__name__}')
 
 
