@@ -1,5 +1,6 @@
 import logging
 import threading
+import sys
 
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
@@ -35,10 +36,11 @@ class Base:
             self.__connect()
             self.experiment(self.__target)
         except KeyboardInterrupt:
-            raise
+            logging.warning('Please wait... cleaning up servers...')
+            sys.exit(1)
         finally:
             self.__disconnect()
-
+´
         logging.info(f'Finished: {self.__class__.__name__}')
 
 
