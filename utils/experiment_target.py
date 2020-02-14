@@ -12,7 +12,7 @@ class ExperimentTarget:
         self.__rpc_handler = rpc_handler
         self.__server = server
     
-    def run_cmd(self, cmd, stdout=None, stderr=None):
+    def run_cmd(self, cmd, stdout=None, stderr=None, env={}):
         cmd_id = str(uuid.uuid4())
 
         handler = ExperimentCommandHandler(self.__proxy, cmd_id, stdout, stderr)
@@ -21,7 +21,7 @@ class ExperimentTarget:
         logging.info(f'Running {cmd_id} on {self.__server.id}: {cmd}')
 
         with xmlrpc.client.ServerProxy(self.__proxy) as proxy:
-            proxy.run_cmd(cmd_id, cmd, f'http://{config.CLIENT_IP}:{config.CLIENT_PORT}/')
+            proxy.run_cmd(cmd_id, cmd, env, f'http://{config.CLIENT_IP}:{config.CLIENT_PORT}/')
             
         return handler
 

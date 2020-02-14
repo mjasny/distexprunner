@@ -23,9 +23,9 @@ class ServerInstance:
             time.sleep(0.5)
         logging.info('Server cleanup complete')
 
-    def run_cmd(self, cmd_id, cmd, callback_addr):
+    def run_cmd(self, cmd_id, cmd, env, callback_addr):
         assert(cmd_id not in self.__processes)
-        self.__processes[cmd_id] = ServerProcess(cmd_id, cmd, callback_addr)
+        self.__processes[cmd_id] = ServerProcess(cmd_id, cmd, env, callback_addr)
 
 
     def cmd_stdin(self, cmd_id, line):

@@ -51,7 +51,17 @@ def exp3_factory(a, b):
 
     return exp3
 
-
 a = ['x', 'y']
 b = range(5, 10)
 experiment.factory.Grid(exp3_factory, a, b)
+
+
+class exp4(experiment.Base):
+    SERVERS = [
+        experiment.Server('node1', '127.0.0.1')
+    ]
+    def experiment(self, target):
+        env = {
+            'OMP_NUM_THREADS': 8
+        }
+        target('node1').run_cmd('env', stdout=experiment.Printer(), stderr=experiment.Printer(), env=env).wait()

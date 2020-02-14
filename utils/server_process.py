@@ -4,6 +4,7 @@ import xmlrpc.client
 import subprocess
 import time
 import shlex
+import os
 import functools
 
 from utils import LinePipe
@@ -24,10 +25,11 @@ class LineProxy:
 
 
 class ServerProcess(threading.Thread):
-    def __init__(self, id, cmd, callback_addr):
+    def __init__(self, id, cmd, env, callback_addr):
         super().__init__()
         self.id = id
         self.cmd = cmd
+        self.env = env
         self.callback_addr = callback_addr
         self.rc = None
         self.p = None
@@ -40,7 +42,10 @@ class ServerProcess(threading.Thread):
         logging.info(f'Running cmd: {self.cmd}')
         stdout = LinePipe(callback=LineProxy(self.id, 'cmd_stdout', self.callback_addr)) #TODO change to partial
         stderr = LinePipe(callback=LineProxy(self.id, 'cmd_stderr', self.callback_addr))
-        self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=1, shell=False)
+
+        environ = os.environ.copy()
+        environ.update({k: str(v) for k, v in self.env.items()})
+        self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=False, env=environ)
 
         self.p.wait()
         self.rc = self.p.returncode
