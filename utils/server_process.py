@@ -45,7 +45,7 @@ class ServerProcess(threading.Thread):
 
         environ = os.environ.copy()
         environ.update({k: str(v) for k, v in self.env.items()})
-        self.p = subprocess.Popen(shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=False, env=environ)
+        self.p = subprocess.Popen(['stdbuf', '-oL'] + shlex.split(self.cmd), stdout=stdout, stderr=stderr, stdin=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=False, env=environ)
 
         self.p.wait()
         self.rc = self.p.returncode

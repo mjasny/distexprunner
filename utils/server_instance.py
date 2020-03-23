@@ -32,8 +32,8 @@ class ServerInstance:
         if cmd_id not in self.__processes:
             return False
 
-        if isinstance(line, str):
-            line = line.encode()
+        # if isinstance(line, str):
+        #     line = line.encode()
         self.__processes[cmd_id].stdin(line)
 
 
