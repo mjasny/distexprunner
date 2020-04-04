@@ -30,7 +30,7 @@ class exp2(experiment.Base):
         procs = []
         for i, s in enumerate(self.SERVERS):
             try:
-                p = target(s.id).run_cmd(f'sleep {5*(i+1)}', stdout=experiment.Printer(), stderr=experiment.Printer())
+                p = target(s).run_cmd(f'sleep {5*(i+1)}', stdout=experiment.Printer(), stderr=experiment.Printer())
             except experiment.errors.NoConnectionError:
                 continue
             procs.append(p)
@@ -48,7 +48,6 @@ def exp3_factory(a, b):
         def experiment(self, target):
             cmd = f'./foobar -a {a} -b {b}'
             print(cmd)
-
     return exp3
 
 a = ['x', 'y']
