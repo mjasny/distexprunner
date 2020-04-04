@@ -13,13 +13,25 @@ import experiment
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, resume):
         self.experiments = []
+        self.resume = resume
 
     def run(self):
-        for Experiment in self.experiments:
+        self.__prep_resume()
+
+        logging.warning(f'Total experiments to run: {len(self.experiments)}')
+        for i, Experiment in enumerate(self.experiments):
+            logging.warning(f'Running experiment: {i+1}/{len(self.experiments)} ({(i+1)/len(self.experiments):.0%})')
+
             experiment = Experiment()
             experiment.run()
+
+            with open(config.CLIENT_RESUME_FILE, 'a+') as f:
+                f.write(f'{Experiment.__name__}\n')
+
+        if os.path.exists(config.CLIENT_RESUME_FILE):
+            os.remove(config.CLIENT_RESUME_FILE)
 
     def add_experiments(self, folder):
         if not os.path.exists(folder):
@@ -49,8 +61,8 @@ class Client:
 
 
     def filter_experiments(self, filters):
-        fn = lambda x: any(fnmatch.fnmatch(x.__name__, f) for f in filters)
-        self.experiments = filter(fn, self.experiments)
+        fn = lambda x: any(fnmatch.fnmatch(x.__name__, f) for f in filters) or x.RUN_ALWAYS
+        self.experiments = list(filter(fn, self.experiments))
 
 
     def __experiments_from_file(self, file):
@@ -64,16 +76,38 @@ class Client:
                 yield cls
 
 
+    def __prep_resume(self):
+        if not self.resume:
+            return
+
+        def read_resume_file():
+            if not os.path.exists(config.CLIENT_RESUME_FILE):
+                return []
+            with open(config.CLIENT_RESUME_FILE, 'r') as f:
+                return [line for line in f.read().splitlines() if len(line) > 0]
+        
+        run_exps = read_resume_file()
+        if len(run_exps) == 0:
+            return
+
+        fn = lambda x: x.__name__ not in run_exps or x.RUN_ALWAYS
+        self.experiments = list(filter(fn, self.experiments))
+        logging.warning(f'Removed already run experiments: {", ".join(run_exps)}')
+            
+        
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Distributed Experiment Runner Client Instance')
     parser.add_argument('--filter', action='append', type=str, help='filter experiments by name')
+    parser.add_argument('--resume', action='store_true', help='Resume execution of experiments from last failure')
     parser.add_argument('folder', nargs='?', type=str, default=config.CLIENT_EXPERIMENT_FOLDER, help='experiment folder')
     args = parser.parse_args()
 
     logging.basicConfig(format='[%(asctime)s]: %(message)s', level=logging.DEBUG)
 
-    client = Client()
+    client = Client(args.resume)
 
     client.add_experiments(args.folder)
     if args.filter:

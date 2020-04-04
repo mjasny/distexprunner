@@ -13,6 +13,7 @@ import config
 
 class Base:
     SERVERS = []
+    RUN_ALWAYS=False
 
     def __init__(self):
         self.__init_called = True
@@ -86,7 +87,7 @@ class Base:
     def __target(self, node_id):
         if isinstance(node_id, experiment.Server):
             node_id = node_id.id
-            
+
         if node_id not in self.proxies:
             raise errors.NoConnectionError(f'No connection found to: {node_id}')
 

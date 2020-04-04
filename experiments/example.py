@@ -64,3 +64,32 @@ class exp4(experiment.Base):
             'OMP_NUM_THREADS': 8
         }
         target('node1').run_cmd('env', stdout=experiment.Printer(), stderr=experiment.Printer(), env=env).wait()
+
+
+
+class AA_CompileJob(experiment.Base):
+    SERVERS = exp1.SERVERS
+    RUN_ALWAYS = True       # immune to filters
+    def experiment(self, target):
+        cmake_cmd = 'cmake -B../build -S../'
+        procs = []
+        for s in self.SERVERS:
+            printer = experiment.Printer(fmt=f'{s.id}: '+'{line}')
+            try:
+                p = target(s).run_cmd(cmake_cmd, stdout=printer, stderr=printer)
+            except experiment.errors.NoConnectionError:
+                continue
+            procs.append(p)
+        [proc.wait() for proc in procs]
+
+        make_cmd = 'make -j -C ../build'
+        procs = []
+        for s in self.SERVERS:
+            printer = experiment.Printer(fmt=f'{s.id}: '+'{line}')
+            try:
+                p = target(s).run_cmd(make_cmd, stdout=printer, stderr=printer)
+            except experiment.errors.NoConnectionError:
+                continue
+            procs.append(p)
+        rcs = [proc.wait() for proc in procs]
+        assert(all(rc == 0 for rc in rcs))
