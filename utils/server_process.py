@@ -61,7 +61,7 @@ class ServerProcess(threading.Thread):
         stderr.close()
 
     def stdin(self, line):
-        if self.rc:
+        if self.rc is not None:
             raise Exception(f'Process alreading terminated could not send stdin: {line}')
 
         self.__wait_for_p()
@@ -70,7 +70,7 @@ class ServerProcess(threading.Thread):
 
 
     def kill(self):
-        if self.rc:
+        if self.rc is not None:
             return
 
         self.__wait_for_p()
