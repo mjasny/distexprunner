@@ -10,7 +10,6 @@ class ExperimentCommandHandler:
         self.__stdout = stdout if isinstance(stdout, collections.Iterable) else [stdout]
         self.__stderr = stderr if isinstance(stderr, collections.Iterable) else [stderr]
         self.__rc = None
-        self.lock = threading.Lock()
         self.cond = threading.Condition()
 
     def _cmd_stdout(self, line):
@@ -26,11 +25,15 @@ class ExperimentCommandHandler:
             self.__rc = rc 
             self.cond.notifyAll()
 
-    def wait(self):
-        with self.cond:
-            while self.__rc is None:
-                self.cond.wait()
-        return self.__rc
+    def wait(self, block=True):
+        if block:
+            with self.cond:
+                while self.__rc is None:
+                    self.cond.wait()
+            return self.__rc
+        else:
+            with self.cond:
+                return self.__rc
 
     def stdin(self, line):
         with xmlrpc.client.ServerProxy(self.__proxy) as proxy:

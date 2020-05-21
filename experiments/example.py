@@ -95,19 +95,40 @@ class exp4(experiment.Base):
 #         assert(all(rc == 0 for rc in rcs))
 
 
-# MAX_RESTARTS = 3
+MAX_RESTARTS = 3
 class restart(experiment.Base):
     SERVERS = [
         experiment.Server('node1', '127.0.0.1', custom_field=42)
     ]
     def experiment(self, target):
-        cmd = target('node1').run_cmd('sleep 1', stdout=experiment.Printer())
+        cmd = target('node1').run_cmd('bash -c "sleep 1 && exit -11"', stdout=experiment.Printer())
         rcs = [cmd.wait()]
 
-        # global MAX_RESTARTS
-        # if MAX_RESTARTS > 0:
-        #     MAX_RESTARTS -= 1
-        #     raise experiment.actions.Restart
+        global MAX_RESTARTS
+        MAX_RESTARTS -= 1
+        if MAX_RESTARTS == 0:
+            return
 
         if not all(rc == 0 for rc in rcs):
             raise experiment.actions.Restart
+
+
+class async_restart(experiment.Base):
+    SERVERS = [
+        experiment.Server('node1', '127.0.0.1', custom_field=42)
+    ]
+    def experiment(self, target):
+        procs = []
+
+        proc = target('node1').run_cmd('bash -c "sleep 1 && exit 0"', stdout=experiment.Printer())
+        procs.append(proc)
+
+        while True:
+            rcs = [proc.wait(block=False) for proc in procs]
+            if any(rc is not None and rc != 0 for rc in rcs):
+                raise experiment.actions.Restart
+
+            if all(rc == 0 for rc in rcs):
+                break
+
+            time.sleep(0.1)
