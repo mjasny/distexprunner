@@ -21,14 +21,23 @@ class Client:
         self.__prep_resume()
 
         logging.warning(f'Total experiments to run: {len(self.experiments)}')
-        for i, Experiment in enumerate(self.experiments):
+        i = 0
+        while i < len(self.experiments):
+            #for i, Experiment in enumerate(self.experiments):
+            Experiment = self.experiments[i]
             logging.warning(f'Running experiment: {i+1}/{len(self.experiments)} ({(i+1)/len(self.experiments):.0%})')
 
-            experiment = Experiment()
-            experiment.run()
+            try:
+                exp = Experiment()
+                exp.run()
+            except experiment.actions.Restart:
+                logging.warning(f'Restarting Experiment {Experiment.__name__}')
+                continue
 
             with open(config.CLIENT_RESUME_FILE, 'a+') as f:
                 f.write(f'{Experiment.__name__}\n')
+            
+            i += 1
 
         if os.path.exists(config.CLIENT_RESUME_FILE):
             os.remove(config.CLIENT_RESUME_FILE)

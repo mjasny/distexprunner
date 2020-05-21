@@ -1,0 +1,2 @@
+class Restart(Exception):
+    pass
