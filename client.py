@@ -111,10 +111,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Distributed Experiment Runner Client Instance')
     parser.add_argument('--filter', action='append', type=str, help='filter experiments by name')
     parser.add_argument('--resume', action='store_true', help='Resume execution of experiments from last failure')
+    parser.add_argument('--log', type=str, help='Log into file')
     parser.add_argument('folder', nargs='?', type=str, default=config.CLIENT_EXPERIMENT_FOLDER, help='experiment folder')
     args = parser.parse_args()
 
+    
     logging.basicConfig(format='[%(asctime)s]: %(message)s', level=logging.DEBUG)
+    if args.log:
+        fh = logging.FileHandler(args.log)
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('[%(asctime)s]: %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
 
     client = Client(args.resume)
 
