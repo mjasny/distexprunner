@@ -134,8 +134,10 @@ usage: server.py [-h] [--port [PORT]]
 Distributed Experiment Runner Server Instance
 
 optional arguments:
-  -h, --help     show this help message and exit
-  --port [PORT]  port for client connection
+  -h, --help            show this help message and exit
+  --port [PORT]         port for client connection
+  --auto-kill AUTO_KILL
+                        auto terminate server after <int/float> hours
 ```
 
 - `port` defaults to value specified in `config.py`
