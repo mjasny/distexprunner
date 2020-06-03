@@ -5,3 +5,4 @@ from .server_instance import ServerInstance
 from .experiment_client_instance import ExperimentClientInstance
 from .experiment_command_handler import ExperimentCommandHandler
 from .experiment_target import ExperimentTarget
+from .slack_webhook import send_slack_notification

@@ -117,12 +117,14 @@ optional arguments:
   -h, --help       show this help message and exit
   --filter FILTER  filter experiments by name
   --resume         Resume execution of experiments from last failure
+  --slack-webhook  SLACK_WEBHOOK
   --log LOG        Log into file
 ```
 
 - `folder` defaults to `experiments/`
 - `--filter` can be supplied multiple times and matches are run in order. Uses Unix-filename matching internally (e.g. `--filter=exper*`)
 - `--resume` only runs experiments which are not present in file `.exps_progress` or where `RUN_ALWAYS` evaluates to `True`
+- `--slack-webhook` if supplied a notification is sent to the channel after all experiments are run (see: https://api.slack.com/tutorials/slack-apps-hello-world)
 - `--log` logs all output into a file (append mode)
 
 

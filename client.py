@@ -10,6 +10,7 @@ import re
 
 import config
 import experiment
+from utils import send_slack_notification
 
 
 class Client:
@@ -41,6 +42,8 @@ class Client:
 
         if os.path.exists(config.CLIENT_RESUME_FILE):
             os.remove(config.CLIENT_RESUME_FILE)
+
+        return i
 
     def add_experiments(self, folder):
         if not os.path.exists(folder):
@@ -111,6 +114,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Distributed Experiment Runner Client Instance')
     parser.add_argument('--filter', action='append', type=str, help='filter experiments by name')
     parser.add_argument('--resume', action='store_true', help='Resume execution of experiments from last failure')
+    parser.add_argument('--slack-webhook', type=str, help='Notify to slack when execution finishes')
     parser.add_argument('--log', type=str, help='Log into file')
     parser.add_argument('folder', nargs='?', type=str, default=config.CLIENT_EXPERIMENT_FOLDER, help='experiment folder')
     args = parser.parse_args()
@@ -132,4 +136,7 @@ if __name__ == '__main__':
     if args.filter:
         client.filter_experiments(args.filter)
 
-    client.run()
+    num_exps = client.run()
+
+    if args.slack_webhook:
+        send_slack_notification(webhook=args.slack_webhook, num_exps=num_exps)
