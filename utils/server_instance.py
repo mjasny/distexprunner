@@ -49,7 +49,8 @@ class ServerInstance:
 
     def run_cmd(self, cmd_id, cmd, env, callback_addr):
         assert(cmd_id not in self.__processes)
-        self.autokiller.reset()
+        if hasattr(self, 'autokiller'):
+            self.autokiller.reset()
         self.__processes[cmd_id] = ServerProcess(cmd_id, cmd, env, callback_addr)
 
 
