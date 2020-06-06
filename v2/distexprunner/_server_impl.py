@@ -47,15 +47,7 @@ class ServerImpl(ServerInterface):
                 await rpc(uuid, line.decode('utf-8'))
                 
         
-        # cmd = ['stdbuf', '-oL'] + shlex.split(cmd)
-        # process = await asyncio.create_subprocess_exec(
-        #     *cmd,
-        #     stdout=asyncio.subprocess.PIPE,
-        #     stderr=asyncio.subprocess.PIPE,
-        #     stdin=asyncio.subprocess.PIPE
-        # )
-  
-        # TODO environment variables
+        # cmd = ['stdbuf', '-oL'] + shlex.split(cmd)  
         # TODO maybe stdbuf necessary
 
         environ = os.environ.copy()

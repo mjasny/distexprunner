@@ -27,3 +27,13 @@ def simple_grid(servers, a, b, to_file):
             stdout = [stdout, Console(fmt=f'{s.id}: %s')]
 
         s.run_cmd(f'echo {a} {b}', stdout=stdout).wait()
+
+
+
+'''
+TODO
+- restart
+- resume
+- slack notification
+- documentation
+'''

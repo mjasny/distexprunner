@@ -44,3 +44,9 @@ def read_stdin(servers):
 def many_trees(servers):
     cmds = [servers[0].run_cmd('tree ../') for _ in range(20)]
     assert(all(cmd.wait() == 0 for cmd in cmds))
+
+
+@exp_reg(servers=server_list)
+def exit_code(servers):
+    cmds = [servers[0].run_cmd(f'exit {i}') for i in range(5)]
+    assert(not all(cmd.wait() == 0 for cmd in cmds))

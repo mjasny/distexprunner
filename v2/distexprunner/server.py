@@ -60,8 +60,14 @@ class Server:
 
 
         class Actions:
-            def wait(self):
-                return loop.run_until_complete(rc_future)
+            def wait(self, block=True):
+                if block:
+                    return loop.run_until_complete(rc_future)
+                
+                if not rc_future.done():
+                    return None
+                return rc_future.result()
+
 
             def kill(self):
                 return loop.run_until_complete(kill_task())

@@ -3,8 +3,8 @@ import functools
 from .server_list import ServerList
 from .parameter_grid import ParameterGrid
 
-EXPERIMENTS = []
 
+EXPERIMENTS = []
 
 
 def exp_reg(servers=None, params=None):
@@ -15,11 +15,11 @@ def exp_reg(servers=None, params=None):
         if not isinstance(params, ParameterGrid):
             raise Exception('params needs to be a ParameterGrid')
 
-        def decorator(func):
+        def decorator_grid(func):
             for p in params.get():
                 name = func.__name__+'_'.join(f'{k}={v}' for k,v in p.items())
                 EXPERIMENTS.append((name, servers, functools.partial(func, **p)))
-        return decorator
+        return decorator_grid
 
 
     def decorator(func):
