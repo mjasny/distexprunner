@@ -17,7 +17,7 @@ def exp_reg(servers=None, params=None):
 
         def decorator_grid(func):
             for p in params.get():
-                name = func.__name__+'_'.join(f'{k}={v}' for k,v in p.items())
+                name = func.__name__+'__'+'_'.join(f'{k}={v}' for k,v in p.items())
                 EXPERIMENTS.append((name, servers, functools.partial(func, **p)))
         return decorator_grid
 
