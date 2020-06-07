@@ -43,6 +43,7 @@ class ExperimentServer:
                     idle_time_left = max_idle
                 else:
                     idle_time_left -= 1
+            logging.info(f'Auto termination after being {max_idle} seconds idle.')
             self.stop_future.set_result(None)
 
         self.loop.create_task(checker())

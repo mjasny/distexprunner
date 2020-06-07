@@ -35,7 +35,7 @@ def kill_yes(servers):
 
 @reg_exp(servers=server_list)
 def read_stdin(servers):
-    cmd = servers['node01'].run_cmd('ls && sleep 4 && read p && echo $p')
+    cmd = servers['node01'].run_cmd('read p && echo $p', stdout=Console(fmt='node01: %s'))
     cmd.stdin('hello\n')
     cmd.wait()
 

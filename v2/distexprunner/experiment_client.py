@@ -7,14 +7,19 @@ import importlib.util
 import time
 
 from . import registry
+from .enums import Action
 from .server_list import ServerList
 from .server import Server
+from .notification import Notifier
+from ._resume_manager import ResumeManager
 
 
 
 class ExperimentClient:
-    def __init__(self, experiments, compatibility_mode):
+    def __init__(self, experiments, compatibility_mode, resume, notifier: Notifier):
         self.__compatibility_mode = compatibility_mode
+        self.__resume = resume
+        self.__notifier = notifier
 
         for exp in experiments:
             path = pathlib.Path(exp)
@@ -80,22 +85,39 @@ class ExperimentClient:
 
 
     def run_experiments(self):
-        logging.info(f'Total experiments: {len(registry.EXPERIMENTS)}')
+        resume_manager = ResumeManager()
+        experiments = registry.ExperimentStore.get()
+        logging.info(f'Total experiments: {len(experiments)}')
 
         totalstart = time.time()
-        for i, (name, servers, experiment) in enumerate(registry.EXPERIMENTS):
+        for i, (name, servers, experiment, max_restarts) in enumerate(experiments):
+            if self.__resume and resume_manager.was_run(name):
+                logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
+                continue
+
+            logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
             servers.connect_to_all()
-            logging.info(f'Running experiment {i+1}/{len(registry.EXPERIMENTS)} ({name})')
 
             start = time.time()
-            experiment(servers)
-
-            logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
+            
+            # iter(int, 1) => infinite
+            restarts = range(max_restarts) if max_restarts != 0 else iter(int, 1) 
+            for _ in restarts:
+                ret = experiment(servers)
+                if ret != Action.RESTART:
+                    break
+                logging.info(f'Restarting experiment {name}')
 
             servers.disconnect_from_all()
+            resume_manager.add_run(name)
+            logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
+
 
         duration = self.__format_duration(time.time() - totalstart)
-        logging.info(f'Finished {len(registry.EXPERIMENTS)} experiments in {duration}')
+        logging.info(f'Finished {len(experiments)} experiments in {duration}')
+        resume_manager.reset()
+
+        self.__notifier.on_finish(len(experiments))
 
 
     def start(self):

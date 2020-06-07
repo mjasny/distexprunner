@@ -47,12 +47,10 @@ class Proxy:
                 raise errors.NoConnectionError
             return server
 
-        while True:
-            try:
-                self.cls().experiment(target)
-                break
-            except actions.Restart:
-                pass
+        try:
+            self.cls().experiment(target)
+        except actions.Restart:
+            return distexprunner.Action.RESTART
 
 
 class factory:

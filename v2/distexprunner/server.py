@@ -54,6 +54,7 @@ class Server:
 
         task = self.__client._run_cmd(_uuid, cmd, env)
         rc_future = loop.run_until_complete(task)
+        logging.info(f'Started on {self.id} uuid={_uuid} cmd={cmd}')
         rpc = self.__client.rpc
 
         async def kill_task():

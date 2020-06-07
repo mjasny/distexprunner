@@ -3,7 +3,6 @@ from distexprunner import *
 
 
 
-
 @reg_exp(servers=ServerList())
 def only_local(servers):
     File('simple_grid.log', append=False)('empty\n')
@@ -30,10 +29,9 @@ def simple_grid(servers, a, b, to_file):
 
 
 
-'''
-TODO
-- restart
-- resume
-- slack notification
-- documentation
-'''
+@reg_exp(servers=server_list, max_restarts=3)
+def restart(servers):
+    for s in servers:
+        cmd = s.run_cmd(f'date && sleep 0.1 && exit 1', stdout=Console(fmt=f'{s.id}: %s'))
+        if cmd.wait() != 0:
+            return Action.RESTART
