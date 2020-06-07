@@ -15,7 +15,7 @@ class exp1(experiment.Base):
         # print(target('node1').data().custom_field)
 
         printer = experiment.Printer(fmt='stdin="{line}"\n', rstrip=True)
-        cmd = target('node1').run_cmd('bash -c "read p && echo $p"', stdout=printer)
+        cmd = target('node1').run_cmd('bash -c \'read p && echo $p\'', stdout=printer)
         # cmd.kill()
         cmd.stdin('foobar\n')
 
