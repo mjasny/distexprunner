@@ -1,22 +1,18 @@
 import sys
 
-class Output:
-    pass
 
-
-class Console(Output):
+class Console:
     def __init__(self, fmt='%s', rstrip=False, end=''):
-        self.__fmt = fmt + end
-        self.__rstrip = rstrip
-        self.__end = end
+        self.fmt = fmt + end
+        self.rstrip = rstrip
 
     def __call__(self, line):
-        if self.__rstrip:
+        if self.rstrip:
             line = line.rstrip()
-        sys.stdout.write(self.__fmt % line)
+        sys.stdout.write(self.fmt % line)
 
 
-class File(Output):
+class File:
     def __init__(self, filename, append=False):
         mode = 'a' if append else 'w'
         self.file = open(filename, mode)

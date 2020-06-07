@@ -26,7 +26,12 @@ class Server:
 
 
     async def _connect(self):
-        self.__reader, self.__writer = await asyncio.open_connection(self.ip, self.port)
+        try:
+            self.__reader, self.__writer = await asyncio.open_connection(self.ip, self.port)
+        except ConnectionRefusedError as e:
+            logging.exception(e)
+            import sys
+            sys.exit(0)
         self.__client = ClientImpl(self.__reader, self.__writer)
 
 

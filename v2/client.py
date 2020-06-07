@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-__author__ = 'mjasny'
-__version__ = '0.0.1'
-
 import argparse
 import logging
 
-from distexprunner import ExperimentClient
+from distexprunner.experiment_client import ExperimentClient
+
+
+__author__ = 'mjasny'
 
 
 if __name__ == '__main__':
@@ -22,9 +22,6 @@ if __name__ == '__main__':
         datefmt='%Y-%m-%d %H:%M:%S',
         level=max(4 - args.verbose, 0) * 10
     )
-
-    logging.basicConfig(level=logging.DEBUG)
-
 
     client = ExperimentClient(args.experiment, args.compatibility_mode)
     client.start()

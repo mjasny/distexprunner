@@ -4,7 +4,7 @@ from distexprunner import *
 
 
 
-@exp_reg(servers=ServerList())
+@reg_exp(servers=ServerList())
 def only_local(servers):
     File('simple_grid.log', append=False)('empty\n')
 
@@ -19,7 +19,7 @@ parameter_grid = ParameterGrid(
     to_file=[True, False]
 )
 
-@exp_reg(servers=server_list, params=parameter_grid)
+@reg_exp(servers=server_list, params=parameter_grid)
 def simple_grid(servers, a, b, to_file):
     for s in servers:
         stdout = File('simple_grid.log', append=True)

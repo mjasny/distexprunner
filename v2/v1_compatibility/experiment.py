@@ -1,35 +1,22 @@
 import itertools
 import logging
 
-from distexprunner import Server, ServerList, exp_reg
+
+import distexprunner
+
+
+Server = distexprunner.Server
+Logfile = distexprunner.File
+
+def Printer(**kwargs):
+    if 'fmt' in kwargs:
+        kwargs['fmt'] = kwargs['fmt'].replace('{line}', '%s')
+    return distexprunner.Console(**kwargs)
 
 
 class Base:
     pass
 
-
-class Printer:
-    def __init__(self, fmt='{line}', rstrip=False, end=''):
-        self.fmt = fmt
-        self.rstrip = rstrip
-        self.end = end
-
-    def __call__(self, line):
-        if self.rstrip:
-            line = line.rstrip()
-        print(self.fmt.format(line=line), end=self.end)
-
-
-class Logfile:
-    def __init__(self, filename, append=False):
-        mode = 'a' if append else 'w'
-        self.file = open(filename, mode)
-
-    def __del__(self):
-        self.file.close()
-
-    def __call__(self, line):
-        self.file.write(line)
 
 
 class errors:
@@ -42,12 +29,13 @@ class actions:
         pass
 
 
-# TODO use exp_reg
+class time:
+    sleep = distexprunner.sleep
 
 
 class Proxy:
     def __init__(self, cls):
-        self.server_list = ServerList(*cls.SERVERS)
+        self.server_list = distexprunner.ServerList(*cls.SERVERS)
         self.cls = cls
         self.__name__ = cls.__name__
 
@@ -81,4 +69,19 @@ class factory:
                 logging.info(f'Generated experiment: {cls.__name__}')
 
                 proxy = Proxy(cls)
-                exp_reg(proxy.server_list)(proxy)
+                distexprunner.reg_exp(proxy.server_list)(proxy)
+
+    class Generator:
+        def __init__(self, factory_fn, generator):
+            for params in generator:
+                cls = factory_fn(*params)
+
+                if not issubclass(cls, Base):
+                    raise Exception('Factory needs to return a child of experiment.Base')
+
+                suffix = '_'.join(map(str, params))
+                cls.__name__ += f'_{suffix}'
+                logging.info(f'Generated experiment: {cls.__name__}')
+                
+                proxy = Proxy(cls)
+                distexprunner.reg_exp(proxy.server_list)(proxy)

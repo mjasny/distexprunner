@@ -9,13 +9,13 @@ import time
 from . import registry
 from .server_list import ServerList
 from .server import Server
-from . import utils
+
 
 
 class ExperimentClient:
     def __init__(self, experiments, compatibility_mode):
         self.__compatibility_mode = compatibility_mode
-        self.tmp = []
+
         for exp in experiments:
             path = pathlib.Path(exp)
             if path.is_file():
@@ -31,36 +31,45 @@ class ExperimentClient:
 
 
     def __read_file(self, file):
+        if self.__compatibility_mode:
+            return self.__read_file_v1(file)
+        
         logging.info(f'Reading file: {file.as_posix()}')
 
         module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
         spec = importlib.util.spec_from_file_location(module_name, file.as_posix())
         module = importlib.util.module_from_spec(spec)
 
-        if self.__compatibility_mode:
-            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'v1_compatibility'))
-            old_time = sys.modules['time']
-            class new_time:
-                @staticmethod
-                def sleep(delay):
-                    utils.sleep(delay)
+        sys.path.append(file.parent.as_posix())
+        spec.loader.exec_module(module)
+        sys.path.pop()
 
-            sys.modules['time'] = new_time #maybe other modules in same style
+
+    def __read_file_v1(self, file):
+        from v1_compatibility import experiment, config
+
+        logging.info(f'Reading file: {file.as_posix()} (in compatibility mode)')
+
+        module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
+        spec = importlib.util.spec_from_file_location(module_name, file.as_posix())
+        module = importlib.util.module_from_spec(spec)
+
+        old_modules = sys.modules
+        sys.modules['time'] = experiment.time
+        sys.modules['experiment'] = experiment
+        sys.modules['config'] = config
 
         sys.path.append(file.parent.as_posix())
         spec.loader.exec_module(module)
         sys.path.pop()
 
-        if self.__compatibility_mode:
-            sys.modules['time'] = old_time
-            import experiment
-            sys.path.pop(0)
-            
-            for cls in module.__dict__.values():
-                if isinstance(cls, type) and issubclass(cls, experiment.Base):
-                    logging.info(f'Found experiment: {cls.__name__}')
-                    proxy = experiment.Proxy(cls)
-                    registry.exp_reg(proxy.server_list)(proxy)
+        sys.modules = old_modules
+        
+        for cls in module.__dict__.values():
+            if isinstance(cls, type) and issubclass(cls, experiment.Base):
+                logging.info(f'Found experiment: {cls.__name__}')
+                proxy = experiment.Proxy(cls)
+                registry.reg_exp(proxy.server_list)(proxy)
 
 
 
@@ -70,7 +79,7 @@ class ExperimentClient:
         return f'{hours:02.0f}:{minutes:02.0f}:{seconds:07.4f}'
 
 
-    def start(self):
+    def run_experiments(self):
         logging.info(f'Total experiments: {len(registry.EXPERIMENTS)}')
 
         totalstart = time.time()
@@ -87,3 +96,22 @@ class ExperimentClient:
 
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(registry.EXPERIMENTS)} experiments in {duration}')
+
+
+    def start(self):
+        try:
+            self.run_experiments()
+        except KeyboardInterrupt:    
+            import asyncio
+            from contextlib import suppress
+
+            loop = asyncio.get_event_loop()
+            tasks = asyncio.all_tasks(loop=loop)
+            for task in tasks:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    loop.run_until_complete(task)
+            logging.info(f'Cancelled {len(tasks)} running tasks.')
+            loop.close()
+
+    

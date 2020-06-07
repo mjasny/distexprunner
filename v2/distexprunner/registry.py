@@ -7,7 +7,7 @@ from .parameter_grid import ParameterGrid
 EXPERIMENTS = []
 
 
-def exp_reg(servers=None, params=None):
+def reg_exp(servers=None, params=None):
     if not isinstance(servers, ServerList):
         raise Exception('Servers needs to be a ServerList')
 
