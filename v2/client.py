@@ -32,13 +32,15 @@ if __name__ == '__main__':
     if args.log:
         logging_handlers.append(logging.FileHandler(filename=args.log))
     
-
-    logging.basicConfig(
-        format='%(asctime)s.%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-        level=max(4 - args.verbose, 0) * 10,
-        handlers=logging_handlers
-    )
+    if logging_handlers:
+        logging.basicConfig(
+            format='%(asctime)s.%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            level=max(4 - args.verbose, 0) * 10,
+            handlers=logging_handlers
+        )
+    else:
+        logging.disable(logging.WARN)
 
 
     if args.slack_webhook:
