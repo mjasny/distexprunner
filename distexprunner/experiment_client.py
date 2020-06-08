@@ -95,13 +95,15 @@ class ExperimentClient:
 
         totalstart = time.time()
         for i, (name, servers, experiment, max_restarts) in enumerate(experiments):
+            if self.__progress:
+                progress.step(name)
+
             if self.__resume and resume_manager.was_run(name):
                 logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
                 continue
 
             logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
-            if self.__progress:
-                progress.step(name)
+
 
             servers.connect_to_all()
 

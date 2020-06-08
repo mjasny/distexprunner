@@ -1,34 +1,33 @@
 #!/usr/bin/env python3
 
 import argparse
-import config
 import logging
 
-from xmlrpc.server import SimpleXMLRPCServer
-
-from utils import ServerInstance
+from distexprunner.experiment_server import ExperimentServer
 
 
-class Server:
-    def __init__(self, port=config.SERVER_PORT, auto_kill=None):
-        self.rpc_server = SimpleXMLRPCServer(('0.0.0.0', port), allow_none=True, logRequests=False)
-        self.server_instance = ServerInstance(auto_kill=auto_kill)
-        self.rpc_server.register_instance(self.server_instance)
+__author__ = 'mjasny'
 
 
-    def start(self):
-        ip, port = self.rpc_server.server_address
-        logging.info(f'Server listening on: {ip}:{port}')
-        self.rpc_server.serve_forever()
-
-
-
-if __name__ == '__main__': 
-    parser = argparse.ArgumentParser(description='Distributed Experiment Runner Server Instance')
-    parser.add_argument('--port', nargs='?', type=int, default=config.SERVER_PORT, help='port for client connection')
-    parser.add_argument('--auto-kill', type=float, help='auto terminate server after <int/float> hours')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Distributed Experiment Runner Server')
+    parser.add_argument('-v', '--verbose', action="count", default=0, help='-v WARN -vv INFO -vvv DEBUG')
+    parser.add_argument('-ip', '--ip', default='0.0.0.0', help='Listening ip')
+    parser.add_argument('-p', '--port', default=20000, help='Listening port')
+    parser.add_argument('-rf', '--run-forever', default=False, action='store_true', help='Disable auto termination of server')
+    parser.add_argument('-mi', '--max-idle', default=3600, type=int, help='Maximum idle time before auto termination (in seconds). Default 1 hour.')
     args = parser.parse_args()
 
-    logging.basicConfig(format='[%(asctime)s]: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s.%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        level=max(4 - args.verbose, 0) * 10
+    )
 
-    Server(port=args.port, auto_kill=args.auto_kill).start()
+
+    server = ExperimentServer(
+        ip=args.ip,
+        port=args.port,
+        max_idle=0 if args.run_forever else args.max_idle
+    )
+    server.start()

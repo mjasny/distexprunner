@@ -42,7 +42,7 @@ def read_stdin(servers):
 
 @reg_exp(servers=server_list)
 def many_trees(servers):
-    cmds = [servers[0].run_cmd('tree ../') for _ in range(20)]
+    cmds = [servers[0].run_cmd('tree') for _ in range(20)]
     assert(all(cmd.wait() == 0 for cmd in cmds))
 
 

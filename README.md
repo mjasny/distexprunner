@@ -2,6 +2,14 @@
 
 A suite to write and run distributed experiments across multiple network nodes.
 
+* *Note: Old experiment syntax can still be read via `--compatibility-mode`*
+* *Note: Version 1 with `experiment.Base` is deprecated for writing new experiments.*
+
+
+## Demo
+
+![](client_demo.gif)
+
 
 ## Installation
 
@@ -10,136 +18,188 @@ The best way to integrate distexprunner in a project is to add it as a submodule
 ```
 mkdir distexperiments/ && cd distexperiments/
 git submodule add https://github.com/mjasny/distexprunner
-cp -r distexprunner/experiments .
+cp -r distexprunner/examples .
 ```
+
+*Note: For readability, all commands only list the required executeable instead of the full path. In this current setup the server command would correspond to: `python3 distexprunner/{server,client}.py`*.
 
 At this stage you can already try the functionality by running locally the following commands in different shells. (e.g. using `tmux`)
 
-Start two server instances. They second instance requires a different port because both run on the same machine:
+Start one server instance. If you need multiple on the same machine you need to specify a different port with `--port`. In general only one instance is needed because it is capable to run multiple commands and even experiments in parallel without interfering with eachother.
 
-`python server.py`
-`python server.py --port 20002`
+`python -vv server.py`
 
 Now a client is ready to connect to the servers and execute experiments.
 
-`python client.py experiments/`
+`python -vv client.py examples/`
 
-The folder parameter (`experiments/`) is the default path to recursively search for experiments.
+The folder parameter (`examples/`) is the search path for new experiments. It scans recursively all `.py` files for experiments which are registered with `@reg_exp(...)`. You can add multiple folders and also refer directly to a `.py` file if you want to run a subset of all experiments.
 
-*Note: For readability, all commands only list the required executeable instead of the full path. In this current setup the server command would correspond to `python3 distexprunner/server.py --port 20001`*.
+The order of the arguments is used as an execution order. This might be useful to do compilation jobs beforehand: `python client.py -vv compile.py scaleout.py`.
+
+
 
 ## Writing experiments
 
 ```python
-import experiment
+import config
+from distexprunner import *
 
-config.CLIENT_IP = '127.0.0.1'
 
-class exp2(experiment.Base):
-    SERVERS = [
-        experiment.Server('node1', '127.0.0.1', sleep=42)
-    ]
-    def experiment(self, target):
-        procs = []
-        for s in self.SERVERS:
-            printer = experiment.Printer(fmt=f'{s.id}: '+'{line}')
-            p = target(s.id).run_cmd(f'sleep {s.data.sleep}', stdout=printer, stderr=printer)
-            procs.append(p)
+server_list = ServerList(
+    Server('node01', '127.0.0.1', config.SERVER_PORT, optional_field=True),
+)
 
-        rcs = [proc.wait() for proc in procs]
-        assert(all(rc == 0 for rc in rcs))
+@reg_exp(servers=server_list)
+def ls(servers):
+    servers[0].run_cmd('ls'}).wait()
+
+@reg_exp(servers=server_list)
+def kill_yes(servers):
+    for s in servers[lambda s: s.optional_field==True]:
+        yes_cmd = s.run_cmd('yes > /dev/null')
+        sleep(3)    # not time.sleep()!
+        yes_cmd.kill()
 ```
 
-Experiments should be placed into a separate folder (e.g. `experiments/`) and need to contain classes which inherit from `experiment.Base`. Other classes are ignored when scanning for experiments and can be used as helpers.
-It is necessary to specify the IP address from which the experiments are started, because currently automatic resolution is not implemented. Tests need to have unique names and take the class-name by default as their name.
-Each experiment class needs to provide a `SERVERS` list on which the experiments are run. In the preparation step it is verified that all servers are running in a clean state. Servers need to have an unique identifier and an IP address. Optional values are the `port` which defaults to `CLIENT_PORT` in `config`. Also an arbitrary long key-value list for server specific data can be specified. These values can be accessed by using the attribute name via `Servers[x].data.foobar` or `target(x).data().foobar`.
-When an experiment is run its `experiment()` function is executed with the target parameter. `target` can be used to access data to a specific server or to spawn processes via `target(x).run_cmd()`. The supplied command is run with `shell=False` that means when you want to use logical expression you might need wrap it around with `bash -c "ping -c 1 {s.id} || echo 'Server unreachable'"` or call a shell script. Optional arguments are `stdout` and `stderr` which may take handlers for lines from the process output. `experiment.Printer()` and `experiment.Logfile()` are preimplemented. If a custom handler is needed a class instace needs to be supplied with a `__call__(self, line)` function.
-Each `run_cmd()` call returns an instance with the following callable methods:
-- `.wait()` blocking call until the process finished execution. Returns the returncode of the process. Returns directly if the process already finished.
-- `.kill()` terminates the running process forcefully.
--  `.stdin('\n')` can be called to send input over stdin to the process.
+Experiments are functions decorated with `@reg_exp(...)` and are grouped in `.py`. The order in which they appear in the file is the same in which they are executed. The function name is used as the experiment name, for parameter grids a suffix is added.
 
-If the `experiment()` function returns before running processes are terminated they are killed. So it is advised to use `.wait()` calls on running processes.
+The decorator takes the following arguments:
+- **servers** => ServerList *(required)*
+- **params** => ParameterGrid *(optional)*
+- **max_restarts** => int *(optional, default unlimited=0)*
+
+The `ServerList` needs to contain all `Servers` which are needed for the experiment. Upon execution it is supplied to the function, servers can be selected via the `[]` operator using an int-index, the server id or a lambda filter predicate.
+
+A `Server` has two mandatory construction arguments: 
+- **id** => str *(required)*
+- **ip** => str *(required, can also be a hostname)*
+- **port** => int *(optional, default 20000)*
+- **\*\*kwargs** => dict *(optional, additional attributes)
+
+Before an experiment is run a connection to all `Server` in the `ServerList` is made and at the end the connection is terminated, which kills all still running on the Server. It is recommended to use a `config.py` for configuration parameters shared across different experiment files.
+
+Inside the experiment function commands can be executed on servers using: `cmd = server.run_cmd(...)`. 
+
+It takes the following arguments:
+- **cmd** => str *(required)*
+- **stdout** => Console/File *(optional, can be a single object or list which is called for each line)*
+- **stderr** => Console/File *(optional, can be a single object or list which is called for each line)*
+- **env** => dict *(optional, adds environment variables)*
 
 
-All experiments which are found in the experiment folder on the client-side are sorted numerically `['a_1', 'a_2', 'a_10', ...]` and executed in order.
+It returns on object with the following callable methods:
+
+- **cmd.wait(block=True)** => int
+
+Is a by default blocking call which waits until the spawned process on the server finishes and returns the returncode. If `block=False` it can return `None` if the process is still running. If the process already finished the returncode is returned immediately. 
+- **kill** => int
+
+Kills the running process and returns a returncode.
+
+- **stdin** => None
+
+Feeds a string into stdin of the running command. `\n` is needed at the end to simulate an ENTER keypress.
+
+If the `experiment()` function returns before running commands are terminated they are killed. So it is advised to use `.wait()` calls on running commands.
+
+The experiment function can return `Action.RESTART` in case some returncodes of previous commands are `!=0` to restart the current experiment indefinetly or `max_restarts` times.
 
 
 ### Experiment Factory
 
-A factory pattern can be used to do parameterized grid executions. The factory is called for the kartesian product (using `itertools.product`) of all parameters (e.g. `a` and `b`).
+`ParameterGrid` can be used to do parameterized grid executions. The experiment is called for the kartesian product (using `itertools.product`) of all parameters (e.g. `a` and `b`). These named arguments are then given to the experiment function upon runtime. The parameters are also used to add a unique suffix the the experiment name, e.g.: `grid__a=4_b=4_to_file=False`.
 
 ```python
-def exp3_factory(a, b):
-    class exp3(experiment.Base):
-        SERVERS = [
-            experiment.Server('node', '127.0.0.1')
-        ]
-        def experiment(self, target):
-            cmd = f'./foobar -a {a} -b {b}'
-            print(cmd)
-
-    return exp3
+import config
+from distexprunner import *
 
 
-a = ['x', 'y']
-b = range(5, 10)
-experiment.factory.Grid(exp3_factory, a, b)
+server_list = ServerList(
+    Server('node01', '127.0.0.1', config.SERVER_PORT, optional_field=True),
+)
+
+parameter_grid = ParameterGrid(
+    a=range(1, 5),
+    b=[2, 4],
+    to_file=[True, False]
+)
+
+@reg_exp(servers=server_list, params=parameter_grid)
+def grid(servers, a, b, to_file):
+    for s in servers:
+        stdout = File('grid.log', append=True)
+        if not to_file:
+            stdout = [stdout, Console(fmt=f'{s.id}: %s')]
+
+        s.run_cmd(f'echo {a} {b}', stdout=stdout).wait()
+
+
 ```
 
 This generates the following set of experiments:
 
 ```
 experiments = [
-    exp3_x_5, exp3_x_6, exp3_x_7, exp3_x_8, exp3_x_9, 
-    exp3_y_5, exp3_y_6, exp3_y_7, exp3_y_8, exp3_y_9
+    grid__a=1_b=2_to_file=True, grid__a=1_b=2_to_file=False, 
+    grid__a=1_b=4_to_file=True, grid__a=1_b=4_to_file=False, 
+    grid__a=2_b=2_to_file=True, grid__a=2_b=2_to_file=False, 
+    grid__a=2_b=4_to_file=True, grid__a=2_b=4_to_file=False, 
+    grid__a=3_b=2_to_file=True, grid__a=3_b=2_to_file=False, 
+    grid__a=3_b=4_to_file=True, grid__a=3_b=4_to_file=False, 
+    grid__a=4_b=2_to_file=True, grid__a=4_b=2_to_file=False, 
+    grid__a=4_b=4_to_file=True, grid__a=4_b=4_to_file=False 
 ]
 ```
 
 
 ## Usage
 
-An example setup can be found in [experiments/example.py](experiments/example.py).
-Please not that a common practice is to include a compile experiment named `AA_Compile` with the optional server feature which is run always before other experiments to make use of the newest program version. It can then also be used in a double filter setup, e.g. `python client.py --filter=AA_Compile --filter=<name>`. The prefix `AA_` is chosen so that the experiment is always run first.
+Examples can be found in [examples/](./examples/).
+- Simple experiments: [examples/basic.py](./examples/basic.py)
+- Advanced experiments: [examples/advanced.py](./examples/advanced.py)
+
 
 
 ## Client
 
 ```
-usage: client.py [-h] [--filter FILTER] [--resume] [--log LOG] [folder]
+usage: client.py [-h] [-v] [--resume] [--compatibility-mode] [--slack-webhook SLACK_WEBHOOK] experiment [experiment ...]
 
 Distributed Experiment Runner Client Instance
 
 positional arguments:
-  folder           experiment folder
+  experiment            path to experiments, folders are searched recursively, order is important
 
 optional arguments:
-  -h, --help       show this help message and exit
-  --filter FILTER  filter experiments by name
-  --resume         Resume execution of experiments from last failure
-  --slack-webhook  SLACK_WEBHOOK
-  --log LOG        Log into file
+  -h, --help            show this help message and exit
+  -v, --verbose         -v WARN -vv INFO -vvv DEBUG
+  --resume              Resume execution of experiments from last run
+  --compatibility-mode  Activate compatibiliy mode for class x(experiment.Base)
+  --slack-webhook SLACK_WEBHOOK
+                        Notify to slack when execution finishes
+
 ```
 
-- `folder` defaults to `experiments/`
-- `--filter` can be supplied multiple times and matches are run in order. Uses Unix-filename matching internally (e.g. `--filter=exper*`)
-- `--resume` only runs experiments which are not present in file `.exps_progress` or where `RUN_ALWAYS` evaluates to `True`
+- `experiment` Used to search for experiments
+- `--resume` In case of interruption, only runs experiments which are not present in file `.distexprunner`
 - `--slack-webhook` if supplied a notification is sent to the channel after all experiments are run (see: https://api.slack.com/tutorials/slack-apps-hello-world)
-- `--log` logs all output into a file (append mode)
+
 
 
 ## Server
 
 ```
-usage: server.py [-h] [--port [PORT]]
+usage: server.py [-h] [-v] [-ip IP] [-p PORT] [-rf] [-mi MAX_IDLE]
 
-Distributed Experiment Runner Server Instance
+Distributed Experiment Runner Server
 
 optional arguments:
   -h, --help            show this help message and exit
-  --port [PORT]         port for client connection
-  --auto-kill AUTO_KILL
-                        auto terminate server after <int/float> hours
+  -v, --verbose         -v WARN -vv INFO -vvv DEBUG
+  -ip IP, --ip IP       Listening ip
+  -p PORT, --port PORT  Listening port
+  -rf, --run-forever    Disable auto termination of server
+  -mi MAX_IDLE, --max-idle MAX_IDLE
+                        Maximum idle time before auto termination (in seconds). Default 1 hour.
 ```
-
-- `port` defaults to value specified in `config.py`
