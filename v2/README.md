@@ -155,9 +155,9 @@ experiments = [
 
 ## Usage
 
-Examples can be found in [examples/](./experiments/).
-- Simple experiments: [examples/basic.py](./experiments/basic.py)
-- Advanced experiments: [examples/advanced.py](./experiments/advanced.py)
+Examples can be found in [examples/](./examples/).
+- Simple experiments: [examples/basic.py](./examples/basic.py)
+- Advanced experiments: [examples/advanced.py](./examples/advanced.py)
 
 
 
