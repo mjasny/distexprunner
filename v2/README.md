@@ -5,6 +5,12 @@ A suite to write and run distributed experiments across multiple network nodes.
 * *Note: Old experiment syntax can still be read via `--compatibility-mode`*
 * *Note: Version 1 with `experiment.Base` is deprecated for writing new experiments.*
 
+
+## Demo
+
+![](client_demo.gif)
+
+
 ## Installation
 
 The best way to integrate distexprunner in a project is to add it as a submodule:
@@ -149,9 +155,9 @@ experiments = [
 
 ## Usage
 
-Examples can be found in [examples/](experiments/).
-- [examples/basic.py](experiments/basic.py)
-- [examples/advanced.py](experiments/advanced.py)
+Examples can be found in [examples/](./experiments/).
+- Simple experiments: [examples/basic.py](./experiments/basic.py)
+- Advanced experiments: [examples/advanced.py](./experiments/advanced.py)
 
 
 

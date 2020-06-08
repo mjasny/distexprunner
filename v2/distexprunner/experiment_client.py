@@ -12,14 +12,15 @@ from .server_list import ServerList
 from .server import Server
 from .notification import Notifier
 from ._resume_manager import ResumeManager
-
+from ._progressbar import Progress
 
 
 class ExperimentClient:
-    def __init__(self, experiments, compatibility_mode, resume, notifier: Notifier):
+    def __init__(self, experiments, compatibility_mode, resume, notifier: Notifier, progress: bool):
         self.__compatibility_mode = compatibility_mode
         self.__resume = resume
         self.__notifier = notifier
+        self.__progress = progress
 
         for exp in experiments:
             path = pathlib.Path(exp)
@@ -89,6 +90,9 @@ class ExperimentClient:
         experiments = registry.ExperimentStore.get()
         logging.info(f'Total experiments: {len(experiments)}')
 
+        if self.__progress:
+            progress = Progress(len(experiments))
+
         totalstart = time.time()
         for i, (name, servers, experiment, max_restarts) in enumerate(experiments):
             if self.__resume and resume_manager.was_run(name):
@@ -96,6 +100,9 @@ class ExperimentClient:
                 continue
 
             logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
+            if self.__progress:
+                progress.step(name)
+
             servers.connect_to_all()
 
             start = time.time()
@@ -116,6 +123,8 @@ class ExperimentClient:
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
         resume_manager.reset()
+        if self.__progress:
+            progress.finish()
 
         self.__notifier.on_finish(len(experiments))
 
