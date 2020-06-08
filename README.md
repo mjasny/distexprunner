@@ -52,7 +52,7 @@ server_list = ServerList(
 
 @reg_exp(servers=server_list)
 def ls(servers):
-    servers[0].run_cmd('ls'}).wait()
+    servers[0].run_cmd('ls').wait()
 
 @reg_exp(servers=server_list)
 def kill_yes(servers):
