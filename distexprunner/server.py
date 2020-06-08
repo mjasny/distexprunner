@@ -61,8 +61,8 @@ class Server:
             await rpc.kill_cmd(_uuid)
             return await rc_future
 
-        async def stdin_task(line):
-            await rpc.stdin_cmd(_uuid, line)
+        async def stdin_task(line, close):
+            await rpc.stdin_cmd(_uuid, line, close)
 
 
         class Actions:
@@ -78,8 +78,8 @@ class Server:
             def kill(self):
                 return loop.run_until_complete(kill_task())
 
-            def stdin(self, line):
-                loop.run_until_complete(stdin_task(line))
+            def stdin(self, line, close=False):
+                loop.run_until_complete(stdin_task(line, close))
 
             def async_stdin(self, line):
                 loop.create_task(rpc.stdin_cmd(_uuid, line))

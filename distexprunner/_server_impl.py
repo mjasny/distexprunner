@@ -54,7 +54,7 @@ class ServerImpl(ServerInterface):
         environ.update({k: str(v) for k, v in env.items()})
 
         process = await asyncio.create_subprocess_shell(
-            cmd,
+            f'stdbuf -oL -- {cmd}',
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
@@ -91,14 +91,21 @@ class ServerImpl(ServerInterface):
             pass # TODO maybe send error to client
 
     
-    async def stdin_cmd(self, uuid, line):
+    async def stdin_cmd(self, uuid, line, close=False):
         await self.__process_startup(uuid)
+        p = self.__processes[uuid]
+
+        if p.stdin.is_closing():
+            logging.error(f'{uuid} has stdin closed')
+            return
 
         sys.stdout.write(line)
         sys.stdout.flush()
 
-        p = self.__processes[uuid]
         p.stdin.write(line.encode())
+        if close:
+            p.stdin.write_eof()
+
         try:
             await p.stdin.drain()
         except ConnectionResetError:

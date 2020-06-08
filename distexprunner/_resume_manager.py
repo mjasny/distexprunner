@@ -25,4 +25,5 @@ class ResumeManager:
     
     def reset(self):
         self.already_run = set()
-        self.path.unlink()
+        if self.path.exists():
+            self.path.unlink()
