@@ -20,6 +20,7 @@ def buffered_stdout(servers):
             printf("%d\n", i);
             usleep(1000000);
         }
+        return 0;
     }
     """
     exe = 'unbuffered'

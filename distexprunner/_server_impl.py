@@ -47,14 +47,14 @@ class ServerImpl(ServerInterface):
                 await rpc(uuid, line.decode('utf-8'))
                 
         
-        # cmd = ['stdbuf', '-oL'] + shlex.split(cmd)  
-        # TODO maybe stdbuf necessary
-
         environ = os.environ.copy()
         environ.update({k: str(v) for k, v in env.items()})
+        environ['_STDBUF_O'] = 'L'
+        environ['LD_PRELOAD'] = environ.get('LD_PRELOAD', '') + ':/usr/lib/coreutils/libstdbuf.so'
+     
 
         process = await asyncio.create_subprocess_shell(
-            f'stdbuf -oL -- {cmd}',
+            cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
