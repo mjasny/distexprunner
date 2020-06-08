@@ -11,6 +11,9 @@ Logfile = distexprunner.File
 def Printer(**kwargs):
     if 'fmt' in kwargs:
         kwargs['fmt'] = kwargs['fmt'].replace('{line}', '%s')
+    for x in ['rstrip', 'end']:
+        if x in kwargs:
+            del kwargs[x]
     return distexprunner.Console(**kwargs)
 
 

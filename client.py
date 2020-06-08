@@ -6,6 +6,7 @@ import sys
 
 from distexprunner.experiment_client import ExperimentClient
 from distexprunner.notification import Notifier, Slack
+from distexprunner.outputs import LOG_LEVEL_CMD
 
 
 __author__ = 'mjasny'
@@ -40,7 +41,7 @@ if __name__ == '__main__':
             handlers=logging_handlers
         )
     else:
-        logging.disable(logging.WARN)
+        logging.disable(LOG_LEVEL_CMD)
 
 
     if args.slack_webhook:

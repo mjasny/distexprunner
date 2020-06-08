@@ -1,15 +1,17 @@
 import sys
+import logging
+
+
+LOG_LEVEL_CMD = 100
+logging.addLevelName(LOG_LEVEL_CMD, 'CONSOLE')
 
 
 class Console:
-    def __init__(self, fmt='%s', rstrip=False, end=''):
-        self.fmt = fmt + end
-        self.rstrip = rstrip
+    def __init__(self, fmt='%s'):
+        self.fmt = fmt
 
     def __call__(self, line):
-        if self.rstrip:
-            line = line.rstrip()
-        sys.stdout.write(self.fmt % line)
+        logging.log(LOG_LEVEL_CMD, self.fmt % line.rstrip())
 
 
 class File:
