@@ -62,6 +62,8 @@ def kill_yes(servers):
         yes_cmd.kill()
 ```
 
+### Experiment registration
+
 Experiments are functions decorated with `@reg_exp(...)` and are grouped in `.py`. The order in which they appear in the file is the same in which they are executed. The function name is used as the experiment name, for parameter grids a suffix is added.
 
 The decorator takes the following arguments:
@@ -71,6 +73,9 @@ The decorator takes the following arguments:
 
 The `ServerList` needs to contain all `Servers` which are needed for the experiment. Upon execution it is supplied to the function, servers can be selected via the `[]` operator using an int-index, the server id or a lambda filter predicate.
 
+
+### ServerList definition
+
 A `Server` has two mandatory construction arguments: 
 - **id** => str *(required)*
 - **ip** => str *(required, can also be a hostname)*
@@ -78,6 +83,8 @@ A `Server` has two mandatory construction arguments:
 - **\*\*kwargs** => dict *(optional, additional attributes)
 
 Before an experiment is run a connection to all `Server` in the `ServerList` is made and at the end the connection is terminated, which kills all still running on the Server. It is recommended to use a `config.py` for configuration parameters shared across different experiment files.
+
+### Command execution
 
 Inside the experiment function commands can be executed on servers using: `cmd = server.run_cmd(...)`. 
 
@@ -87,19 +94,22 @@ It takes the following arguments:
 - **stderr** => Console/File *(optional, can be a single object or list which is called for each line)*
 - **env** => dict *(optional, adds environment variables)*
 
+#### Command actions
 
-It returns on object with the following callable methods:
+It returns on object `cmd = run_cmd(...)` with the following callable methods:
 
 - **cmd.wait(block=True)** => int
 
 Is a by default blocking call which waits until the spawned process on the server finishes and returns the returncode. If `block=False` it can return `None` if the process is still running. If the process already finished the returncode is returned immediately. 
-- **kill** => int
+- **cmd.kill()** => int
 
 Kills the running process and returns a returncode.
 
-- **stdin** => None
+- **cmd.stdin(close=False)** => None
 
-Feeds a string into stdin of the running command. `\n` is needed at the end to simulate an ENTER keypress.
+Feeds a string into stdin of the running command. `\n` is needed at the end to simulate an ENTER keypress. If `close=True` then the stdin to the process is closed.
+
+### Experiment behaviour
 
 If the `experiment()` function returns before running commands are terminated they are killed. So it is advised to use `.wait()` calls on running commands.
 
@@ -156,9 +166,6 @@ experiments = [
 ## Usage
 
 Examples can be found in [examples/](./examples/).
-- Simple experiments: [examples/basic.py](./examples/basic.py)
-- Advanced experiments: [examples/advanced.py](./examples/advanced.py)
-
 
 
 ## Client
@@ -178,13 +185,15 @@ optional arguments:
   --compatibility-mode  Activate compatibiliy mode for class x(experiment.Base)
   --slack-webhook SLACK_WEBHOOK
                         Notify to slack when execution finishes
-
+  --progress            Display progressbar, but disables logging
+  --log LOG             Log into file
 ```
 
 - `experiment` Used to search for experiments
 - `--resume` In case of interruption, only runs experiments which are not present in file `.distexprunner`
 - `--slack-webhook` if supplied a notification is sent to the channel after all experiments are run (see: https://api.slack.com/tutorials/slack-apps-hello-world)
-
+- `--progress` Displays a progressbar, but needs to completely disable logging output. Therefore use in conjuncition with `--log`
+- `--log` Appends all logging output in addition to stdout into a file.
 
 
 ## Server
