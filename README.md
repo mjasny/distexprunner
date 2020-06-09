@@ -193,7 +193,7 @@ optional arguments:
 - `--resume` In case of interruption, only runs experiments which are not present in file `.distexprunner`
 - `--slack-webhook` if supplied a notification is sent to the channel after all experiments are run (see: https://api.slack.com/tutorials/slack-apps-hello-world)
 - `--progress` Displays a progressbar, but needs to completely disable logging output. Therefore use in conjuncition with `--log`
-- `--log` Appends all logging output in addition to stdout into a file.
+- `--log` Appends all logging output in addition to stderr into a file.
 
 
 ## Server
@@ -211,4 +211,5 @@ optional arguments:
   -rf, --run-forever    Disable auto termination of server
   -mi MAX_IDLE, --max-idle MAX_IDLE
                         Maximum idle time before auto termination (in seconds). Default 1 hour.
+  -o LOG, --log LOG     Log into file
 ```

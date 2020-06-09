@@ -27,7 +27,7 @@ if __name__ == '__main__':
     logging_handlers = []
 
     if not args.progress:
-        logging_handlers.append(logging.StreamHandler(sys.stdout))
+        logging_handlers.append(logging.StreamHandler())
 
 
     if args.log:
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     
     if logging_handlers:
         logging.basicConfig(
-            format='%(asctime)s.%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d]: %(message)s',
+            format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s', # [%(filename)s:%(lineno)d]:
             datefmt='%Y-%m-%d %H:%M:%S',
             level=max(4 - args.verbose, 0) * 10,
             handlers=logging_handlers
