@@ -57,4 +57,4 @@ class ClientImpl(ClientInterface):
     async def rc(self, uuid, rc):
         if uuid in self.rc_futures:
             self.rc_futures[uuid].set_result(rc)
-        logging.info(f'{uuid} finished with exit code: {rc}')
+        logging.info(f'uuid={uuid} finished with exit code: {rc}')

@@ -52,6 +52,8 @@ class ServerList:
         else:
             raise Exception(f'Lookup type: {type(key)} not supported')
         
-    
     def __iter__(self):
         return iter(self.__servers)
+
+    def __len__(self):
+        return len(self.__servers)
