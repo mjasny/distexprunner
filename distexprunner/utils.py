@@ -1,7 +1,10 @@
 import asyncio
 import sys, tty, termios
 import logging
+import itertools
 
+
+__all__ = ['sleep', 'forward_stdin_to', 'counter', 'log']
 
 
 def sleep(delay):
@@ -46,3 +49,15 @@ def forward_stdin_to(cmd, esc='\x1b'): # \x02 ESC \x03 Ctrl-C
 
     loop.run_until_complete(task())
     
+
+def counter(start=0, step=1):
+    """Helper to count, c = counter(0); next(c)==0 next(c)==1"""
+    return itertools.count(start=start, step=step)
+
+
+LOG_LEVEL_CMD = 99
+logging.addLevelName(LOG_LEVEL_CMD, 'LOG')
+
+def log(message):
+    """Log message using logging system with tag LOG"""
+    logging.log(LOG_LEVEL_CMD, f'{message}\n')
