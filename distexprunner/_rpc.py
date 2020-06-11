@@ -2,6 +2,10 @@ import asyncio
 import logging
 import json
 
+try:
+    from asyncio.exceptions import IncompleteReadError
+except ModuleNotFoundError: # for python3.7
+    from asyncio.streams import IncompleteReadError
 
 
 def RPCWriter(RPCInterface):
@@ -47,7 +51,7 @@ class RPCReader:
 
             try:
                 data = await self.__reader.readuntil(separator=b'\n')
-            except (asyncio.exceptions.IncompleteReadError, ConnectionResetError):
+            except (IncompleteReadError, ConnectionResetError):
                 break
 
             json_data = json.loads(data[:-1])
