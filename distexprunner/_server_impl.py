@@ -4,6 +4,7 @@ import shlex
 import os
 import sys
 import signal
+import subprocess
 
 from ._server_interface import ServerInterface
 from ._client_interface import ClientInterface
@@ -19,6 +20,12 @@ class ServerImpl(ServerInterface):
         self.__processes = {}
 
         # TODO kill processes if client doesn't respond to ping
+
+        self.__stdbuf_so = subprocess.check_output(
+            "stdbuf -oL env | awk -F'=' '/^LD_PRELOAD=/ {print $2}'",
+            shell=True,
+            encoding='utf-8'
+        ).strip()
 
 
     
@@ -50,7 +57,7 @@ class ServerImpl(ServerInterface):
         environ = os.environ.copy()
         environ.update({k: str(v) for k, v in env.items()})
         environ['_STDBUF_O'] = 'L'
-        environ['LD_PRELOAD'] = environ.get('LD_PRELOAD', '') + ':/usr/lib/coreutils/libstdbuf.so'
+        environ['LD_PRELOAD'] = f'{environ.get("LD_PRELOAD", "")}:{self.__stdbuf_so}'
      
 
         process = await asyncio.create_subprocess_shell(
