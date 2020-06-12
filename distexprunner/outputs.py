@@ -16,15 +16,18 @@ class Console:
 
 
 class File:
-    def __init__(self, filename, append=False):
+    def __init__(self, filename, append=False, flush=False):
         mode = 'a' if append else 'w'
         self.file = open(filename, mode)
+        self.flush = flush
 
     def __del__(self):
         self.file.close()
 
     def __call__(self, line):
         self.file.write(line)
+        if self.flush:
+            self.file.flush()
 
 
 class SubstrMatcher:
@@ -34,6 +37,8 @@ class SubstrMatcher:
         self.__future = self.__loop.create_future()
 
     def __call__(self, line):
+        if self.__future.done():
+            return  # TODO maybe make resetable
         if self.substr in line:
             self.__future.set_result(None)
 
