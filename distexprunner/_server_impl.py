@@ -75,7 +75,7 @@ class ServerImpl(ServerInterface):
             _read_stream(process.stderr, self.rpc.stderr)
         ])
         rc = await process.wait()
-        logging.info(f'Got rc={rc} for: {cmd}')
+        logging.info(f'Got rc={rc} for: {repr(cmd)}')
         await self.rpc.rc(uuid, rc)
 
     

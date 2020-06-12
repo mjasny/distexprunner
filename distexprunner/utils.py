@@ -2,9 +2,10 @@ import asyncio
 import sys, tty, termios
 import logging
 import itertools
+import functools
 
 
-__all__ = ['sleep', 'forward_stdin_to', 'counter', 'log']
+__all__ = ['sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
 
 
 def sleep(delay):
@@ -17,7 +18,7 @@ def sleep(delay):
 
 
 def forward_stdin_to(cmd, esc='\x1b'): # \x02 ESC \x03 Ctrl-C
-    """foward console stdin to running command"""
+    """forward console stdin to running command (A BIT BUGGY)"""
 
     logging.info(f'Interfacing with command in progress... Press ESC to quit.')
 
@@ -46,7 +47,6 @@ def forward_stdin_to(cmd, esc='\x1b'): # \x02 ESC \x03 Ctrl-C
         loop.remove_reader(fd)
 
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-
     loop.run_until_complete(task())
     
 
@@ -61,3 +61,25 @@ logging.addLevelName(LOG_LEVEL_CMD, 'LOG')
 def log(message):
     """Log message using logging system with tag LOG"""
     logging.log(LOG_LEVEL_CMD, f'{message}\n')
+
+
+class IterClassGen:
+    """Generates and stores conveniently as many instances of classes as needed"""
+    def __init__(self, cls, *args, **kwargs):
+        self.__factory = functools.partial(cls, *args, **kwargs)
+        self.__instances = []
+
+    def __next__(self):
+        instance = self.__factory()
+        self.__instances.append(instance)
+        return instance
+
+    
+    def __getitem__(self, key):
+        return self.__instances[key]
+        
+    def __iter__(self):
+        return iter(self.__instances)
+
+    def __len__(self):
+        return len(self.__instances)
