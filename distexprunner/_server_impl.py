@@ -5,10 +5,12 @@ import os
 import sys
 import signal
 import subprocess
+import atexit
 
 from ._server_interface import ServerInterface
 from ._client_interface import ClientInterface
 from ._rpc import RPCReader, RPCWriter
+
 
 
 class ServerImpl(ServerInterface):
@@ -27,14 +29,27 @@ class ServerImpl(ServerInterface):
             encoding='utf-8'
         ).strip()
 
-
+        atexit.register(self.__at_exit)
     
     async def _on_disconnect(self):
-        # logging.info(f'pings={self.pings}')
         for uuid in self.__processes.keys():
             await self.kill_cmd(uuid)
 
-            
+        atexit.unregister(self.__at_exit)
+
+
+    def __at_exit(self):
+        num_procs = len(self.__processes)
+
+        for uuid, p in self.__processes.items():
+            try:
+                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+                logging.info(f'killed: {uuid} {p.pid}')
+            except ProcessLookupError:
+                logging.error(f'could not find: {uuid} {p.pid}')
+
+        logging.info(f'Killed {num_procs} running process')
+          
     
     async def ping(self, *args, **kwargs):
         # await asyncio.sleep(0.1)
@@ -66,7 +81,7 @@ class ServerImpl(ServerInterface):
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             env=environ,
-            preexec_fn=os.setsid
+            start_new_session=True
         )
         self.__processes[uuid] = process
 
@@ -95,7 +110,8 @@ class ServerImpl(ServerInterface):
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
             logging.info(f'killed: {uuid} {self.__processes[uuid].pid}')
         except ProcessLookupError:  #two kills
-            pass # TODO maybe send error to client
+            logging.error(f'could not find: {uuid} {p.pid}')
+            # TODO maybe send error to client
 
     
     async def stdin_cmd(self, uuid, line, close=False):
