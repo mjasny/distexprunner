@@ -110,7 +110,7 @@ class ServerImpl(ServerInterface):
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
             logging.info(f'killed: {uuid} {self.__processes[uuid].pid}')
         except ProcessLookupError:  #two kills
-            logging.error(f'could not find: {uuid} {p.pid}')
+            logging.error(f'could not find: {uuid} {self.__processes[uuid].pid}')
             # TODO maybe send error to client
 
     
