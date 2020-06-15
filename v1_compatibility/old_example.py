@@ -12,7 +12,7 @@ class exp1(experiment.Base):
 
         target('node1').run_cmd('ls', stdout=[experiment.Printer(), experiment.Logfile('ls.log', append=True)])
         # self.SERVERS[0].data.custom_field = 69
-        # print(target('node1').data().custom_field)
+        print(target('node1').data.custom_field)
 
         printer = experiment.Printer(fmt='stdin="{line}"\n', rstrip=True)
         cmd = target('node1').run_cmd('bash -c \'read p && echo $p\'', stdout=printer)

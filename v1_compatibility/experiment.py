@@ -5,7 +5,12 @@ import logging
 import distexprunner
 
 
-Server = distexprunner.Server
+class Server(distexprunner.Server):
+    @property
+    def data(self):
+        return self
+
+
 Logfile = distexprunner.File
 
 def Printer(**kwargs):
