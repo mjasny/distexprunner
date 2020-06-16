@@ -3,12 +3,6 @@ from distexprunner import *
 
 
 
-@reg_exp(servers=ServerList())
-def only_local(servers):
-    File('simple_grid.log', append=False)('empty\n')
-
-
-
 server_list = ServerList(
     Server('node01', '127.0.0.1', config.SERVER_PORT),
 )
@@ -28,10 +22,6 @@ def simple_grid(servers, a, b, to_file):
         s.run_cmd(f'echo {a} {b}', stdout=stdout).wait()
 
 
-
-@reg_exp(servers=server_list, max_restarts=3)
-def restart(servers):
-    for s in servers:
-        cmd = s.run_cmd(f'date && sleep 0.1 && exit 1', stdout=Console(fmt=f'{s.id}: %s'))
-        if cmd.wait() != 0:
-            return Action.RESTART
+@reg_exp(servers=ServerList())
+def only_local(servers):
+    File('simple_grid.log', append=False)('empty\n')

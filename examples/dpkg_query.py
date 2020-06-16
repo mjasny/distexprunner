@@ -20,13 +20,13 @@ class PackageList:
 @reg_exp(servers=config.server_list)
 def check_packages(servers):
     package_lists = IterClassGen(PackageList)
-    apps = ['gcc', 'cmakeasdf', 'python3.7']
+    apps = ['gcc', 'cmake', 'python3.7']
     cmd = f"dpkg-query -W -f='${{Package}}|${{Version}}\n' {' '.join(apps)}"
 
     procs = [s.run_cmd(cmd, stdout=next(package_lists)) for s in servers]
     [p.wait() for p in procs]
 
     for package_list in package_lists:
-        assert(len(package_list.packages) == len(apps), 'Not all installed')
+        assert(len(package_list.packages) == len(apps))
 
 

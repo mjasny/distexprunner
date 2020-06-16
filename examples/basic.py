@@ -9,13 +9,6 @@ server_list = ServerList(
 
 
 @reg_exp(servers=server_list)
-def environment_variables(servers):
-    for s in servers:
-        s.run_cmd('env', env={'OMP_NUM_THREADS': 8}).wait()
-
-
-
-@reg_exp(servers=server_list)
 def bash_for(servers):
     for s in servers[:1]:
         cmd = s.run_cmd('for i in {1..10}; do echo $i; sleep 0.1; done')
