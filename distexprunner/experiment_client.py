@@ -105,7 +105,7 @@ class ExperimentClient:
             logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
 
 
-            servers.connect_to_all()
+            servers._connect_to_all()
 
             start = time.time()
             
@@ -117,7 +117,7 @@ class ExperimentClient:
                     break
                 logging.info(f'Restarting experiment {name}')
 
-            servers.disconnect_from_all()
+            servers._disconnect_from_all()
             resume_manager.add_run(name)
             logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 

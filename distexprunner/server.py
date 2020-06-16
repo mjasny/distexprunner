@@ -40,6 +40,13 @@ class Server:
         await self.__writer.wait_closed()
 
 
+    def cd(self, directory):
+        loop = asyncio.get_event_loop()
+        task = self.__client.rpc.cd(directory)
+        loop.run_until_complete(task)
+
+
+
     def run_cmd(self, cmd, stdout=None, stderr=None, env={}):
         loop = asyncio.get_event_loop()
         _uuid = str(uuid.uuid4())

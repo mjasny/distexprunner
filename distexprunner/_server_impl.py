@@ -20,6 +20,7 @@ class ServerImpl(ServerInterface):
 
         self.pings = 0
         self.__processes = {}
+        self.__cwd = None
 
         # TODO kill processes if client doesn't respond to ping
 
@@ -46,7 +47,7 @@ class ServerImpl(ServerInterface):
                 os.killpg(os.getpgid(p.pid), signal.SIGKILL)
                 logging.info(f'killed: {uuid} {p.pid}')
             except ProcessLookupError:
-                logging.error(f'could not find: {uuid} {p.pid}')
+                logging.info(f'could not find uuid={uuid} with pid={p.pid}')
 
         logging.info(f'Killed {num_procs} running process')
           
@@ -55,6 +56,10 @@ class ServerImpl(ServerInterface):
         # await asyncio.sleep(0.1)
         self.pings += 1
         await self.rpc.pong(*args, **kwargs)
+
+    
+    async def cd(self, directory):
+        self.__cwd = directory
 
     
     async def run_cmd(self, uuid, cmd, env={}):
@@ -81,6 +86,7 @@ class ServerImpl(ServerInterface):
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             env=environ,
+            cwd=self.__cwd,
             start_new_session=True
         )
         self.__processes[uuid] = process
@@ -110,7 +116,7 @@ class ServerImpl(ServerInterface):
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
             logging.info(f'killed: {uuid} {self.__processes[uuid].pid}')
         except ProcessLookupError:  #two kills
-            logging.error(f'could not find: {uuid} {self.__processes[uuid].pid}')
+            logging.info(f'could not find uuid={uuid} with pid={self.__processes[uuid].pid}')
             # TODO maybe send error to client
 
     

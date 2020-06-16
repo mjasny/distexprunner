@@ -6,7 +6,7 @@ from .server import Server
 
 
 class ServerList:
-    def __init__(self, *servers):
+    def __init__(self, *servers, working_directory=None):
         if not all(isinstance(s, Server) for s in servers):
             raise Exception('Only Server type allowed')
 
@@ -16,16 +16,23 @@ class ServerList:
         self.__servers = servers
         self.__id_to_server = {s.id: s for s in servers}
         self.__loop = asyncio.get_event_loop()
+        self.__working_directory = working_directory
 
 
-    def connect_to_all(self):
+    def cd(self, directory):
+        for s in self.__servers:
+            s.cd(directory)
+
+
+    def _connect_to_all(self):
         if not self.__servers:
             return
         task = asyncio.wait([s._connect() for s in self.__servers])
         self.__loop.run_until_complete(task)
+        self.cd(self.__working_directory)
 
 
-    def disconnect_from_all(self):
+    def _disconnect_from_all(self):
         if not self.__servers:
             return
         task = asyncio.wait([s._disconnect() for s in self.__servers])
