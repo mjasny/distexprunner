@@ -112,4 +112,4 @@ class StdinController:
 
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         sys.stdout.write('\r\n')
-        self.__log(f'Controller exited.')
+        self.__log(f'Controller exited. Continuing execution...')

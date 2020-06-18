@@ -134,7 +134,9 @@ class ExperimentClient:
     def start(self):
         try:
             self.run_experiments()
-        except KeyboardInterrupt:    
+        except KeyboardInterrupt:
+            logging.error('Terminating Client caused by Ctrl-C')
+        finally:
             import asyncio
             from contextlib import suppress
 

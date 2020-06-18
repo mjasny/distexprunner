@@ -2,6 +2,7 @@ import asyncio
 import logging
 import collections
 import uuid
+import socket
 
 from ._client_impl import ClientImpl
 from .stdin_controller import StdinController
@@ -27,12 +28,7 @@ class Server:
 
 
     async def _connect(self):
-        try:
-            self.__reader, self.__writer = await asyncio.open_connection(self.ip, self.port)
-        except ConnectionRefusedError as e:
-            logging.exception(e)
-            import sys
-            sys.exit(0)
+        self.__reader, self.__writer = await asyncio.open_connection(self.ip, self.port)
         self.__client = ClientImpl(self.__reader, self.__writer)
 
 
@@ -67,10 +63,12 @@ class Server:
         rpc = self.__client.rpc
 
 
-        if isinstance(stdin, StdinController): # TODO maybe accept file
-            stdin.add(self.id, _uuid, cmd, rpc)
-        else:
-            logging.error(f'Stdin argument of unsupported type! {stdin}')
+        if stdin is not None:
+            if isinstance(stdin, StdinController): # TODO maybe accept file
+                stdin.add(self.id, _uuid, cmd, rpc)
+            else:
+                logging.error(f'Stdin argument of unsupported type! {stdin}')
+
 
         async def kill_task():
             await rpc.kill_cmd(_uuid)
