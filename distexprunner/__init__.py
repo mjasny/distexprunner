@@ -6,6 +6,7 @@ from .parameter_grid import ParameterGrid
 from .outputs import Console, File, SubstrMatcher
 from .enums import *
 from . import notification
+from .stdin_controller import StdinController
 
 
 __author__ = 'mjasny'

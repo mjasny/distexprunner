@@ -35,7 +35,7 @@ if __name__ == '__main__':
     
     if logging_handlers:
         logging.basicConfig(
-            format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s', # [%(filename)s:%(lineno)d]:
+            format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s\r', # [%(filename)s:%(lineno)d]:
             datefmt='%Y-%m-%d %H:%M:%S',
             level=max(4 - args.verbose, 0) * 10,
             handlers=logging_handlers

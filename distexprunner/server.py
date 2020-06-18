@@ -4,6 +4,7 @@ import collections
 import uuid
 
 from ._client_impl import ClientImpl
+from .stdin_controller import StdinController
 
 
 class Server:
@@ -47,7 +48,7 @@ class Server:
 
 
 
-    def run_cmd(self, cmd, stdout=None, stderr=None, env={}):
+    def run_cmd(self, cmd, stdout=None, stderr=None, stdin=None, env={}):
         loop = asyncio.get_event_loop()
         _uuid = str(uuid.uuid4())
 
@@ -59,10 +60,17 @@ class Server:
             stderr = stderr if isinstance(stderr, collections.Iterable) else [stderr]
             self.__client._set_stderr(_uuid, stderr)
 
+
         task = self.__client._run_cmd(_uuid, cmd, env)
         rc_future = loop.run_until_complete(task)
         logging.info(f'{self.id}: {repr(cmd)} uuid={_uuid}')
         rpc = self.__client.rpc
+
+
+        if isinstance(stdin, StdinController): # TODO maybe accept file
+            stdin.add(self.id, _uuid, cmd, rpc)
+        else:
+            logging.error(f'Stdin argument of unsupported type! {stdin}')
 
         async def kill_task():
             await rpc.kill_cmd(_uuid)
@@ -88,8 +96,8 @@ class Server:
             def stdin(self, line, close=False):
                 loop.run_until_complete(stdin_task(line, close))
 
-            def async_stdin(self, line):
-                loop.create_task(rpc.stdin_cmd(_uuid, line))
+            def async_stdin(self, line, close=False):
+                loop.create_task(rpc.stdin_cmd(_uuid, line, close=close))
 
 
         return Actions()

@@ -5,7 +5,10 @@ import itertools
 import functools
 
 
-__all__ = ['sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
+__all__ = ['GDB', 'sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
+
+
+GDB = f'gdb --ex run --args'
 
 
 def sleep(delay):

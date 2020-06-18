@@ -91,6 +91,7 @@ class ServerImpl(ServerInterface):
             start_new_session=True
         )
         self.__processes[uuid] = process
+        logging.info(f'Attach gdb: gdb -p {process.pid}')
 
         await asyncio.wait([
             _read_stream(process.stdout, self.rpc.stdout),
