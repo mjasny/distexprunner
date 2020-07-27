@@ -32,8 +32,7 @@ class File:
 class SubstrMatcher:
     def __init__(self, substr):
         self.substr = substr
-        self.__loop = asyncio.get_event_loop()
-        self.__future = self.__loop.create_future()
+        self.reset()
 
     def __call__(self, line):
         if self.__future.done():
@@ -44,3 +43,16 @@ class SubstrMatcher:
     def wait(self):
         self.__loop.run_until_complete(self.__future)
         return True
+
+    def reset(self):
+        self.__loop = asyncio.get_event_loop()
+        self.__future = self.__loop.create_future()
+
+
+class EnvParser:
+    def __call__(self, line):
+        name, value = line.split('=', 1)
+        self.__dict__[name] = value.rstrip()
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
