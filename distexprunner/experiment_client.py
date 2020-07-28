@@ -1,4 +1,5 @@
 
+import asyncio
 import logging
 import pathlib
 import sys
@@ -13,6 +14,7 @@ from .server import Server
 from .notification import Notifier
 from ._resume_manager import ResumeManager
 from ._progressbar import Progress
+from ._exceptions import BadReturnCode
 
 
 class ExperimentClient:
@@ -21,6 +23,7 @@ class ExperimentClient:
         self.__resume = resume
         self.__notifier = notifier
         self.__progress = progress
+        self.__raise = True
 
         for exp in experiments:
             path = pathlib.Path(exp)
@@ -91,12 +94,27 @@ class ExperimentClient:
         logging.info(f'Total experiments: {len(experiments)}')
 
         if self.__progress:
-            progress = Progress(len(experiments))
+            self.__progressbar = Progress(len(experiments))
+
+
+        def exception_handler(loop, context):
+            loop.default_exception_handler(context)
+
+            exception = context.get('exception')
+            if isinstance(exception, BadReturnCode):
+                if self.__progress:
+                    self.__progressbar.step(error=exception)
+                else:
+                    logging.error(exception)
+                self.__raise = False
+                loop.stop()
+            
+        loop = asyncio.get_event_loop()
 
         totalstart = time.time()
-        for i, (name, servers, experiment, max_restarts) in enumerate(experiments):
+        for i, (name, servers, experiment, max_restarts, raise_on_rc) in enumerate(experiments):
             if self.__progress:
-                progress.step(name)
+                self.__progressbar.step(name)
 
             if self.__resume and resume_manager.was_run(name):
                 logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
@@ -104,11 +122,15 @@ class ExperimentClient:
 
             logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
 
+            if raise_on_rc:
+                loop.set_exception_handler(exception_handler)
+            else:
+                loop.set_exception_handler(None)
 
             servers._connect_to_all()
 
             start = time.time()
-            
+
             # iter(int, 1) => infinite
             restarts = range(max_restarts) if max_restarts != 0 else iter(int, 1) 
             for _ in restarts:
@@ -126,7 +148,7 @@ class ExperimentClient:
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
         resume_manager.reset()
         if self.__progress:
-            progress.finish()
+            self.__progressbar.finish()
 
         self.__notifier.on_finish(len(experiments))
 
@@ -136,6 +158,11 @@ class ExperimentClient:
             self.run_experiments()
         except KeyboardInterrupt:
             logging.error('Terminating Client caused by Ctrl-C')
+            if self.__progress:
+                self.__progressbar.step(error='KeyboardInterrupt')
+        except RuntimeError:
+            if self.__raise:
+                raise
         finally:
             import asyncio
             from contextlib import suppress

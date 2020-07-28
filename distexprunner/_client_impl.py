@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 
+from ._exceptions import BadReturnCode
 from ._server_interface import ServerInterface
 from ._client_interface import ClientInterface
 from ._rpc import RPCReader, RPCWriter
@@ -58,3 +59,5 @@ class ClientImpl(ClientInterface):
         if uuid in self.rc_futures:
             self.rc_futures[uuid].set_result(rc)
         logging.info(f'uuid={uuid} finished with exit code: {rc}')
+        if rc != 0:
+            raise BadReturnCode(rc)

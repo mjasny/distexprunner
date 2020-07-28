@@ -7,7 +7,7 @@ server_list = ServerList(
 )
 
 
-@reg_exp(servers=server_list)
+@reg_exp(servers=server_list, raise_on_rc=True)
 def buffered_stdout(servers):
     s = servers[0]
 
