@@ -17,7 +17,7 @@ class PackageList:
 
 
 
-@reg_exp(servers=config.server_list)
+@reg_exp(servers=ServerList())
 def check_packages(servers):
     package_lists = IterClassGen(PackageList)
     apps = ['gcc', 'cmake', 'python3.7']

@@ -29,8 +29,10 @@ class ExperimentClient:
             path = pathlib.Path(exp)
             if path.is_file():
                 self.__read_file(path)
-            else:
+            elif path.is_dir():
                 self.__read_folder(path)
+            else:
+                raise Exception(f'{path} is neither a file or directory.')
 
 
     def __read_folder(self, folder):

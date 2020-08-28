@@ -2,11 +2,7 @@ import config
 from distexprunner import *
 
 
-
-server_list = ServerList(
-    Server('node01', '127.0.0.1', config.SERVER_PORT, optional_field=True),
-)
-
+server_list = config.server_list[0, ]
 
 @reg_exp(servers=server_list)
 def bash_for(servers):
@@ -18,9 +14,9 @@ def bash_for(servers):
 
 
 
-@reg_exp(servers=server_list)
+@reg_exp(servers=server_list, raise_on_rc=False)
 def kill_yes(servers):
-    for s in servers[lambda s: s.optional_field==True]:
+    for s in servers[:1]:
         yes_cmd = s.run_cmd('yes > /dev/null')
         sleep(3)
         yes_cmd.kill()
@@ -35,11 +31,11 @@ def read_stdin(servers):
 
 @reg_exp(servers=server_list)
 def many_trees(servers):
-    cmds = [servers[0].run_cmd('tree') for _ in range(20)]
+    cmds = [servers[0].run_cmd('tree || ls') for _ in range(20)]
     assert(all(cmd.wait() == 0 for cmd in cmds))
 
 
-@reg_exp(servers=server_list)
+@reg_exp(servers=server_list, raise_on_rc=False)
 def exit_code(servers):
     cmds = [servers[0].run_cmd(f'exit {i}') for i in range(5)]
     assert(not all(cmd.wait() == 0 for cmd in cmds))

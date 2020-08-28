@@ -1,14 +1,23 @@
 import asyncio
 import logging
 import types
+from collections.abc import Iterable
 
 from .server import Server
 
 
 class ServerList:
-    def __init__(self, *servers, working_directory=None):
-        if not all(isinstance(s, Server) for s in servers):
-            raise Exception('Only Server type allowed')
+    def __init__(self, *args, working_directory=None):
+        servers = []
+        args = list(args)
+        while args:
+            arg = args.pop(0)
+            if isinstance(arg, Server):
+                servers.append(arg)
+            elif isinstance(arg, Iterable):
+                args[0:0] = arg     # insert at front to preserve order
+            else:
+                raise Exception(f'Unsupported Argument type: {type(arg)}')
 
         if len(set(s.id for s in servers)) != len(servers):
             raise Exception('Server IDs must be unique')
@@ -55,7 +64,9 @@ class ServerList:
             except KeyError:
                 raise Exception(f'KeyError for: {key}')
         elif isinstance(key, types.FunctionType):
-            return list(filter(key, self.__servers))
+            return ServerList(filter(key, self.__servers))
+        elif isinstance(key, tuple):
+            return ServerList(self.__getitem__(k) for k in key)
         else:
             raise Exception(f'Lookup type: {type(key)} not supported')
         

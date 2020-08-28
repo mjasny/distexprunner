@@ -2,14 +2,14 @@ import config
 from distexprunner import *
 
 
-server_list = ServerList(
-    Server('node01', '127.0.0.1', config.SERVER_PORT),
-)
+ENABLED = False
 
 
-
-@reg_exp(servers=server_list)
+@reg_exp(servers=config.server_list[0, ])
 def gdb(servers):
+    if not ENABLED:
+        log('Skipping, not enabled')
+        return
     s = servers[0]
 
     code = r"""

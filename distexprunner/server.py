@@ -23,10 +23,6 @@ class Server:
                 raise Exception(f'Attribute {k} already exists.')
     
 
-    # def __del__(self):
-    #     logging.info('server __del__')
-
-
     async def _connect(self):
         self.__reader, self.__writer = await asyncio.open_connection(self.ip, self.port)
         self.__client = ClientImpl(self.__reader, self.__writer)

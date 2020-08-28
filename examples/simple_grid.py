@@ -3,9 +3,7 @@ from distexprunner import *
 
 
 
-server_list = ServerList(
-    Server('node01', '127.0.0.1', config.SERVER_PORT),
-)
+server_list = config.server_list[0, ]
 parameter_grid = ParameterGrid(
     a=range(1, 5),
     b=[2, 4],

@@ -2,8 +2,9 @@ import config
 from distexprunner import *
 
 
+server_list = ServerList()
 
-@reg_exp(servers=config.server_list)
+@reg_exp(servers=server_list)
 def compile(servers):
     cmake_cmd = f'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..'
     procs = [s.run_cmd(cmake_cmd) for s in servers]
