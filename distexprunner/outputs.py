@@ -1,5 +1,7 @@
 import logging
 import asyncio
+import os
+import re
 
 
 LOG_LEVEL_CMD = 100
@@ -56,3 +58,59 @@ class EnvParser:
 
     def __getitem__(self, key):
         return self.__dict__[key]
+
+
+
+class CSVGenerator:
+    """
+    Generates CSV files from stdout/stderr.
+    Takes a list of regexes with named groups, outputs csv to file or .header/.row.
+    Use in conjuction with IterClassGen:
+    
+    csvs = IterClassGen(CSVGenerator, [
+        r'total_table_agents=(?P<total_table_agents>\d+)',
+    ])
+    s.run_cmd('bin', stdout=next(csvs)).wait()
+    for csv in csvs:
+        csv.write('file.csv')
+    """
+    def __init__(self, regexs):
+        self.__header = []
+        self.__compiled_regexs = []
+        self.__row = {}
+
+        for regex in regexs:
+            regex = re.compile(regex)
+            for key in regex.groupindex.keys():
+                if key in self.__header:
+                    raise Exception(f'{key} already in header set {self.__header}')
+                self.__header.append(key)
+            self.__compiled_regexs.append(regex)
+
+    def __call__(self, line):
+        for regex in self.__compiled_regexs:
+            match = regex.search(line)
+            if not match:
+                continue
+            self.__row.update({k: v for k, v in match.groupdict().items()})
+
+
+    @property
+    def header(self):
+        return ','.join(self.__header)
+
+    @property
+    def row(self):
+        values = [self.__row.get(col) for col in self.__header]
+        values = [value for value in values if value is not None]
+        if len(values) != len(self.__header):
+            raise Exception(f'Not enough values for row:\n{set(self.__header)-set(self.__row.keys())}')
+        return ','.join(values)
+
+
+    def write(self, file):
+        write_header = not os.path.exists(file)
+        with open(file, 'a+') as f:
+            if write_header:
+                f.write(f'{self.header}\n')
+            f.write(f'{self.row}\n')
