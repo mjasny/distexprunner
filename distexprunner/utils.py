@@ -5,10 +5,11 @@ import itertools
 import functools
 
 
-__all__ = ['GDB', 'sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
+__all__ = ['GDB', 'SOCKET_BIND', 'sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
 
 
 GDB = f'gdb --ex run --args'
+SOCKET_BIND = lambda nodes: f'numactl --cpunodebind={nodes} --membind={nodes}'
 
 
 def sleep(delay):
@@ -63,7 +64,7 @@ logging.addLevelName(LOG_LEVEL_CMD, 'LOG')
 
 def log(message):
     """Log message using logging system with tag LOG"""
-    logging.log(LOG_LEVEL_CMD, f'{message}\n')
+    logging.log(LOG_LEVEL_CMD, f'{message}')
 
 
 class IterClassGen:
