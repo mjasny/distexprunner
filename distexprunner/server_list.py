@@ -53,7 +53,7 @@ class ServerList:
 
 
     def __getitem__(self, key):
-        if isinstance(key, (int, slice)):
+        if isinstance(key, int):
             try:
                 return self.__servers[key]
             except IndexError:
@@ -63,6 +63,8 @@ class ServerList:
                 return self.__id_to_server[key]
             except KeyError:
                 raise Exception(f'KeyError for: {key}')
+        elif isinstance(key, slice):
+            return ServerList(self.__servers[key])
         elif isinstance(key, types.FunctionType):
             return ServerList(filter(key, self.__servers))
         elif isinstance(key, tuple):
