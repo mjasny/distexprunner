@@ -74,17 +74,29 @@ class CSVGenerator:
     for csv in csvs:
         csv.write('file.csv')
     """
+    class Array:
+        def __init__(self, regex):
+            self.regex = regex
+
+
     def __init__(self, regexs):
         self.__header = []
         self.__compiled_regexs = []
         self.__row = {}
+        self.__is_array = set()
 
         for regex in regexs:
+            is_array = isinstance(regex, self.Array)
+            if is_array:
+                regex = regex.regex
             regex = re.compile(regex)
             for key in regex.groupindex.keys():
                 if key in self.__header:
                     raise Exception(f'{key} already in header set {self.__header}')
                 self.__header.append(key)
+
+                if is_array:
+                    self.__is_array.add(key)
             self.__compiled_regexs.append(regex)
 
     def __call__(self, line):
@@ -92,7 +104,13 @@ class CSVGenerator:
             match = regex.search(line)
             if not match:
                 continue
-            self.__row.update({k: v for k, v in match.groupdict().items()})
+            for k, v in match.groupdict().items():
+                if k in self.__is_array:
+                    if k not in self.__row:
+                        self.__row [k] = []
+                    self.__row[k].append(v)
+                else:    
+                    self.__row[k] = v
 
 
     @property
@@ -105,7 +123,7 @@ class CSVGenerator:
         values = [value for value in values if value is not None]
         if len(values) != len(self.__header):
             raise Exception(f'Not enough values for row:\n{set(self.__header)-set(self.__row.keys())}')
-        return ','.join(values)
+        return ','.join(map(lambda v: "|".join(v) if isinstance(v, list) else v, values))
 
 
     def write(self, file):
