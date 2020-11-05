@@ -132,3 +132,4 @@ dmypy.json
 *.log
 .distexprunner
 lsyncd.conf
+*.csv
