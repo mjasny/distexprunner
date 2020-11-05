@@ -3,33 +3,54 @@ import shutil
 import math
 
 
+
 class Progress:
     def __init__(self, max_steps, output=sys.stdout, disable_stdout=True):
         self.steps = 0
         self.max_steps = max_steps
         self.current_step = None
-        self.output=sys.stdout
+        self.output = sys.stdout
+        self.line_width = 0
         if disable_stdout:
             sys.stdout = open('/dev/null', 'w')
             sys.stderr = open('/dev/null', 'w')
-    
-    def step(self, name=None, error=None):
-        if self.current_step is not None:
-            CHECK_MARK='\033[0;32m\u2714\033[0m'
-            RED_CROSS='\033[0;31m\u2718\033[0m'
-            self.output.write('\033[1A\033[K')  # 1 up, clear line
-            if error is None:
-                self.output.write(f'{self.current_step} {CHECK_MARK}\n')
-                self.steps += 1
-            else:
-                self.output.write(f'{self.current_step} {RED_CROSS} => {error}\n')
-        if name:
-            self.output.write('\033[K')  # clear line
-            self.output.write(f'{name} ...\n\033[K\n')
-            self.current_step = name
-        else:
-            self.output.write(f'\n\033[K')
 
+
+    def __write(self, s):
+        self.output.write(s)
+        self.line_width = len(s)
+
+
+    def step_start(self, name):
+        self.__write(f'{name} ...\033[K\n')
+        self.current_step = name
+
+        self.render_bar()
+
+
+    def step_finish(self):
+        self.steps += 1
+        self.render_bar()
+
+
+    def step_status(self, error=False, status=None):
+        CHECK_MARK='\033[0;32m\u2714\033[0m'
+        RED_CROSS='\033[0;31m\u2718\033[0m'
+        INFO = '\033[1;33m=>\033[0m'
+        
+        width, _ = shutil.get_terminal_size((80, 20))
+        for _ in range(math.ceil(self.line_width / width)):
+            self.output.write('\033[1A\033[K')  # 1 up, clear line
+
+        if status:
+            self.__write(f'{self.current_step} {INFO} {status}\n')
+        elif not error:
+            self.__write(f'{self.current_step} {CHECK_MARK}\n')
+        else:
+            self.__write(f'{self.current_step} {RED_CROSS} => {error}\n')
+        
+    
+    def render_bar(self):
         width, _ = shutil.get_terminal_size((80, 20))
 
         percent = self.steps/self.max_steps
@@ -46,11 +67,9 @@ class Progress:
         suffix = f'[{"#"*hashes}{"."*dots}]'
 
         progress = f'\033[0;42;30m{prefix}\033[0m {suffix}'
+        self.output.write('\033[K\n')
         self.output.write(progress)
-        if self.steps < self.max_steps and error is None:
-          self.output.write('\033[1A\r')  #1 up, start
+        if self.steps < self.max_steps:
+            self.output.write('\033[1A\r')  #1 up, start
         self.output.flush()
-
     
-    def finish(self):
-        self.step()

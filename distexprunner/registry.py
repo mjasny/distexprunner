@@ -29,8 +29,8 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
             raise Exception('params needs to be a ParameterGrid')
 
         def decorator_grid(func):
-            for p in params.get():
-                name = func.__name__+'__'+'_'.join(f'{k}={v}' for k,v in p.items())
+            for p, name in params.get():
+                name = func.__name__+'__'+name
 
                 ExperimentStore.add(
                     name=name,

@@ -5,6 +5,7 @@ import pathlib
 import sys
 import os
 import importlib.util
+import itertools
 import time
 
 from . import registry
@@ -92,6 +93,8 @@ class ExperimentClient:
 
     def run_experiments(self):
         resume_manager = ResumeManager()
+        if not self.__resume:
+            resume_manager.reset()
         experiments = registry.ExperimentStore.get()
         logging.info(f'Total experiments: {len(experiments)}')
 
@@ -105,7 +108,7 @@ class ExperimentClient:
             exception = context.get('exception')
             if isinstance(exception, BadReturnCode):
                 if self.__progress:
-                    self.__progressbar.step(error=exception)
+                    self.__progressbar.step_status(error=exception)
                 else:
                     logging.error(exception)
                 self.__raise = False
@@ -116,10 +119,13 @@ class ExperimentClient:
         totalstart = time.time()
         for i, (name, servers, experiment, max_restarts, raise_on_rc) in enumerate(experiments):
             if self.__progress:
-                self.__progressbar.step(name)
+                self.__progressbar.step_start(name)
 
             if self.__resume and resume_manager.was_run(name):
                 logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
+                if self.__progress:
+                    self.__progressbar.step_status(error=False)
+                    self.__progressbar.step_finish()
                 continue
 
             logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
@@ -133,24 +139,30 @@ class ExperimentClient:
 
             start = time.time()
 
-            # iter(int, 1) => infinite
-            restarts = range(max_restarts) if max_restarts != 0 else iter(int, 1) 
+            restarts = range(max_restarts+1) if max_restarts != 0 else itertools.count(start=0) 
             for _ in restarts:
                 ret = experiment(servers)
                 if ret != Action.RESTART:
                     break
                 logging.info(f'Restarting experiment {name}')
+                if self.__progress:
+                    self.__progressbar.step_status(status=f'Restarting... ({_+1})')
+
+                asyncio.sleep(1)
 
             servers._disconnect_from_all()
             resume_manager.add_run(name)
             logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 
+            if self.__progress:
+                self.__progressbar.step_status(error=False)
+                self.__progressbar.step_finish()
+
 
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
         resume_manager.reset()
-        if self.__progress:
-            self.__progressbar.finish()
+        
 
         self.__notifier.on_finish(len(experiments))
 
@@ -161,7 +173,8 @@ class ExperimentClient:
         except KeyboardInterrupt:
             logging.error('Terminating Client caused by Ctrl-C')
             if self.__progress:
-                self.__progressbar.step(error='KeyboardInterrupt')
+                self.__progressbar.step_status(error='KeyboardInterrupt')
+                self.__progressbar.step_finish()
         except RuntimeError:
             if self.__raise:
                 raise

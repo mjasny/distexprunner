@@ -46,6 +46,9 @@ class SubstrMatcher:
         self.__loop.run_until_complete(self.__future)
         return True
 
+    def matched(self):
+        return self.__future.done()
+
     def reset(self):
         self.__loop = asyncio.get_event_loop()
         self.__future = self.__loop.create_future()

@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 
@@ -8,14 +9,17 @@ class ResumeManager:
         if self.path.exists():
             with self.path.open('r') as f:
                 self.already_run = set(l for l in f.read().splitlines() if len(l) > 0)
+        
+
 
 
     def was_run(self, name):
-        try:
-            self.already_run.remove(name)
-            return True
-        except KeyError:
-            return False
+        return name in self.already_run
+        # try:
+        #     self.already_run.remove(name)
+        #     return True
+        # except KeyError:
+        #     return False
 
 
     def add_run(self, name):

@@ -4,6 +4,7 @@ import collections
 import uuid
 import socket
 
+from .enums import ReturnCode
 from ._client_impl import ClientImpl
 from .stdin_controller import StdinController
 
@@ -40,7 +41,7 @@ class Server:
 
 
 
-    def run_cmd(self, cmd, stdout=None, stderr=None, stdin=None, env={}):
+    def run_cmd(self, cmd, stdout=None, stderr=None, stdin=None, env={}, timeout=None):
         loop = asyncio.get_event_loop()
         _uuid = str(uuid.uuid4())
 
@@ -74,8 +75,24 @@ class Server:
             await rpc.stdin_cmd(_uuid, line, close)
 
 
+        async def timeout_task():
+            await asyncio.sleep(timeout)
+                # if not rc:
+                #     await kill_task()
+            # except:     #asyncio.TimeoutError
+            if not rc_future.done():
+                rc_future.set_result(ReturnCode.TIMEOUT)
+                logging.info(f'{self.id}: TIMEOUT {repr(cmd)} uuid={_uuid}')
+                await kill_task()
+                
+
+        if timeout:
+            loop.create_task(timeout_task())
+
+
+
         class Actions:
-            def wait(self, block=True):
+            def wait(self, block=True):                
                 if block:
                     return loop.run_until_complete(rc_future)
                 
