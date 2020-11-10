@@ -81,15 +81,20 @@ class CSVGenerator:
         def __init__(self, regex):
             self.regex = regex
 
+    class Sum(Array):
+        pass
+
 
     def __init__(self, regexs):
         self.__header = []
         self.__compiled_regexs = []
         self.__row = {}
         self.__is_array = set()
+        self.__is_sum = set()
 
         for regex in regexs:
             is_array = isinstance(regex, self.Array)
+            is_sum = isinstance(regex, self.Sum)
             if is_array:
                 regex = regex.regex
             regex = re.compile(regex)
@@ -100,7 +105,10 @@ class CSVGenerator:
 
                 if is_array:
                     self.__is_array.add(key)
+                if is_sum:
+                    self.__is_sum.add(key)
             self.__compiled_regexs.append(regex)
+
 
     def __call__(self, line):
         for regex in self.__compiled_regexs:
@@ -110,7 +118,7 @@ class CSVGenerator:
             for k, v in match.groupdict().items():
                 if k in self.__is_array:
                     if k not in self.__row:
-                        self.__row [k] = []
+                        self.__row[k] = []
                     self.__row[k].append(v)
                 else:    
                     self.__row[k] = v
@@ -122,11 +130,18 @@ class CSVGenerator:
 
     @property
     def row(self):
-        values = [self.__row.get(col) for col in self.__header]
-        values = [value for value in values if value is not None]
-        if len(values) != len(self.__header):
+        if len(self.__row.keys()) != len(self.__header):
             raise Exception(f'Not enough values for row:\n{set(self.__header)-set(self.__row.keys())}')
-        return ','.join(map(lambda v: "|".join(v) if isinstance(v, list) else v, values))
+
+        def serialize(k):
+            v = self.__row.get(k)
+            if isinstance(v, list):
+                if k in self.__is_sum:
+                    return str(sum(map(eval, v)))
+                return '|'.join(v)
+            return v
+            
+        return ','.join(map(serialize, self.__header))
 
 
     def write(self, file):
