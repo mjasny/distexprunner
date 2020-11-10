@@ -3,6 +3,7 @@ import asyncio
 import logging
 import pathlib
 import sys
+import traceback
 import os
 import importlib.util
 import itertools
@@ -135,13 +136,33 @@ class ExperimentClient:
             else:
                 loop.set_exception_handler(None)
 
-            servers._connect_to_all()
+            try:
+                servers._connect_to_all()
+            except AttributeError as e:
+                if self.__progress:
+                    self.__progressbar.step_status(error='Could not connect to servers')
+                    self.__progressbar.step_finish()
+                raise
 
             start = time.time()
 
             restarts = range(max_restarts+1) if max_restarts != 0 else itertools.count(start=0) 
             for _ in restarts:
-                ret = experiment(servers)
+                try:
+                    ret = experiment(servers)
+                except AssertionError:
+                    _, _, tb = sys.exc_info()
+                    tb_info = traceback.extract_tb(tb)
+                    filename, line, func, text = tb_info[-1]
+                    if self.__progress: # TODO remove all if self.__progress, enable output stream
+                        self.__progressbar.step_status(error=f'AssertionError {filename}:{line} -> {text}')
+                        self.__progressbar.step_finish()
+                    raise
+                except Exception as e:
+                    if self.__progress:
+                        self.__progressbar.step_status(error=e)
+                        self.__progressbar.step_finish()
+                    raise
                 if ret != Action.RESTART:
                     break
                 logging.info(f'Restarting experiment {name}')
