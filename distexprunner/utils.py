@@ -5,10 +5,10 @@ import itertools
 import functools
 
 
-__all__ = ['GDB', 'SOCKET_BIND', 'sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen']
+__all__ = ['GDB', 'SOCKET_BIND', 'sleep', 'forward_stdin_to', 'counter', 'log', 'IterClassGen', 'any_failed']
 
 
-GDB = f'gdb --ex run --args'
+GDB = f'gdb -quiet --ex run --args'
 SOCKET_BIND = lambda nodes: f'numactl --cpunodebind={nodes} --membind={nodes}'
 
 
@@ -87,3 +87,16 @@ class IterClassGen:
 
     def __len__(self):
         return len(self.__instances)
+
+
+
+def any_failed(cmds, poll_interval=1):
+    """Checks periodically return-codes of commands, returns first rc found to be != 0, else False"""
+    while True:
+        rcs = [cmd.wait(block=False) == 0 for cmd in cmds]
+        for rc in rcs:
+            if rc is not None and rc != 0:
+                return rc
+        if all(rc == 0 for rc in rcs):
+            return False
+        sleep(poll_interval)

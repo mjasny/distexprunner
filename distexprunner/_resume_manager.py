@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import json
 
 
 class ResumeManager:
@@ -13,18 +14,21 @@ class ResumeManager:
 
 
 
-    def was_run(self, name):
-        return name in self.already_run
-        # try:
-        #     self.already_run.remove(name)
-        #     return True
-        # except KeyError:
-        #     return False
+    def was_run(self, exp, params):
+        s = json.dumps({
+            'name': exp,
+            'params': params
+        }, sort_keys=True)
+        return s in self.already_run
 
 
-    def add_run(self, name):
+    def add_run(self, exp, params):
+        s = json.dumps({
+            'name': exp,
+            'params': params
+        }, sort_keys=True)
         with self.path.open('a+') as f:
-            f.write(f'{name}\n')
+            f.write(f'{s}\n')
 
     
     def reset(self):

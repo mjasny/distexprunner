@@ -118,11 +118,11 @@ class ExperimentClient:
         loop = asyncio.get_event_loop()
 
         totalstart = time.time()
-        for i, (name, servers, experiment, max_restarts, raise_on_rc) in enumerate(experiments):
+        for i, (name, servers, experiment, params, max_restarts, raise_on_rc) in enumerate(experiments):
             if self.__progress:
                 self.__progressbar.step_start(name)
 
-            if self.__resume and resume_manager.was_run(name):
+            if self.__resume and resume_manager.was_run(experiment.__name__, params):
                 logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
                 if self.__progress:
                     self.__progressbar.step_status(error=False)
@@ -149,7 +149,7 @@ class ExperimentClient:
             restarts = range(max_restarts+1) if max_restarts != 0 else itertools.count(start=0) 
             for _ in restarts:
                 try:
-                    ret = experiment(servers)
+                    ret = experiment(servers, **params)
                 except AssertionError:
                     _, _, tb = sys.exc_info()
                     tb_info = traceback.extract_tb(tb)
@@ -172,7 +172,7 @@ class ExperimentClient:
                 asyncio.sleep(1)
 
             servers._disconnect_from_all()
-            resume_manager.add_run(name)
+            resume_manager.add_run(experiment.__name__, params)
             logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 
             if self.__progress:

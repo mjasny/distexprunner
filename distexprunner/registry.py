@@ -13,9 +13,9 @@ class ExperimentStore:
         return ExperimentStore.__experiments
 
     @staticmethod
-    def add(*, name, servers, func, max_restarts, raise_on_rc):
+    def add(*, name, servers, func, params, max_restarts, raise_on_rc):
         ExperimentStore.__experiments.append(
-            (name, servers, func, max_restarts, raise_on_rc)
+            (name, servers, func, params, max_restarts, raise_on_rc)
         )
 
 
@@ -35,7 +35,8 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
                 ExperimentStore.add(
                     name=name,
                     servers=servers,
-                    func=functools.partial(func, **p),
+                    func=func,
+                    params=p,
                     max_restarts=max_restarts,
                     raise_on_rc=raise_on_rc
                 )
@@ -47,6 +48,7 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
             name=func.__name__,
             servers=servers,
             func=func,
+            params={},
             max_restarts=max_restarts,
             raise_on_rc=raise_on_rc
         )

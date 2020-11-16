@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import os
+import copy
 import re
 
 
@@ -77,51 +78,104 @@ class CSVGenerator:
     for csv in csvs:
         csv.write('file.csv')
     """
+    class Default:
+        def __init__(self, regex):
+            self.regex = re.compile(regex)
+            self._cols = {k: None for k in self.regex.groupindex.keys()}
+
+        def keys(self):
+            return self._cols.keys()
+
+        def cols(self):
+            for k, v in self._cols.items():
+                if v is not None:
+                    yield (k, v)
+
+        def search(self, line):
+            match = self.regex.search(line)
+            if not match:
+                return
+
+            self._cols.update(match.groupdict())
+
+
     class Array:
         def __init__(self, regex):
-            self.regex = regex
+            self.regex = re.compile(regex)
+            self._cols = {k: [] for k in self.regex.groupindex.keys()}
+
+        def keys(self):
+            return self._cols.keys()
+
+        def cols(self):
+            for k, v in self._cols.items():
+                yield (k, '|'.join(v))
+
+        def search(self, line):
+            match = self.regex.search(line)
+            if not match:
+                return
+
+            for k, v in match.groupdict().items():
+                self._cols[k].append(v)
+
+
 
     class Sum(Array):
-        pass
+        def cols(self):
+            for k, v in self._cols.items():
+                print(v)
+                yield (k, str(sum(map(eval, v))))
+
+
+    class SortedArray:
+        def __init__(self, regex):
+            self.regex = re.compile(regex)
+            keys = list(self.regex.groupindex.keys())
+            try:
+                keys.remove('i')
+            except ValueError:
+                raise Exception('Sorted array needs to have <i> field to be bale to sort')
+            self._cols = {k: [] for k in keys}
+
+        def keys(self):
+            return self._cols.keys()
+
+        def cols(self):
+            for k, v in self._cols.items():
+                v.sort(key=lambda x: x[0])
+                yield (k, '|'.join(map(lambda x: x[1], v)))
+
+        def search(self, line):
+            match = self.regex.search(line)
+            if not match:
+                return
+
+            d = match.groupdict()
+            idx = int(d.pop('i'))
+            for k, v in d.items():
+                self._cols[k].append((idx, v))
 
 
     def __init__(self, regexs):
         self.__header = []
-        self.__compiled_regexs = []
-        self.__row = {}
-        self.__is_array = set()
-        self.__is_sum = set()
+        self.__regexs = []
 
-        for regex in regexs:
-            is_array = isinstance(regex, self.Array)
-            is_sum = isinstance(regex, self.Sum)
-            if is_array:
-                regex = regex.regex
-            regex = re.compile(regex)
-            for key in regex.groupindex.keys():
+        for regex in copy.deepcopy(regexs):
+            if isinstance(regex, str):
+                regex = self.Default(regex)
+            
+            for key in regex.keys():
                 if key in self.__header:
                     raise Exception(f'{key} already in header set {self.__header}')
                 self.__header.append(key)
 
-                if is_array:
-                    self.__is_array.add(key)
-                if is_sum:
-                    self.__is_sum.add(key)
-            self.__compiled_regexs.append(regex)
+            self.__regexs.append(regex)
 
 
     def __call__(self, line):
-        for regex in self.__compiled_regexs:
-            match = regex.search(line)
-            if not match:
-                continue
-            for k, v in match.groupdict().items():
-                if k in self.__is_array:
-                    if k not in self.__row:
-                        self.__row[k] = []
-                    self.__row[k].append(v)
-                else:    
-                    self.__row[k] = v
+        for regex in self.__regexs:
+            regex.search(line)
 
 
     @property
@@ -130,18 +184,13 @@ class CSVGenerator:
 
     @property
     def row(self):
-        if len(self.__row.keys()) != len(self.__header):
-            raise Exception(f'Not enough values for row:\n{set(self.__header)-set(self.__row.keys())}')
+        columns = {k: v for regex in self.__regexs for k, v in regex.cols()}
 
-        def serialize(k):
-            v = self.__row.get(k)
-            if isinstance(v, list):
-                if k in self.__is_sum:
-                    return str(sum(map(eval, v)))
-                return '|'.join(v)
-            return v
+        if len(columns.keys()) != len(self.__header):
+            diff = set(self.__header)-set(columns.keys())
+            raise Exception(f'Not enough values for row:\n{diff}')
             
-        return ','.join(map(serialize, self.__header))
+        return ','.join(map(lambda k: columns[k], self.__header))
 
 
     def write(self, file):
