@@ -93,7 +93,7 @@ class IterClassGen:
 def any_failed(cmds, poll_interval=1):
     """Checks periodically return-codes of commands, returns first rc found to be != 0, else False"""
     while True:
-        rcs = [cmd.wait(block=False) == 0 for cmd in cmds]
+        rcs = [cmd.wait(block=False) for cmd in cmds]
         for rc in rcs:
             if rc is not None and rc != 0:
                 return rc
