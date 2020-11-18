@@ -135,7 +135,7 @@ class CSVGenerator:
             try:
                 keys.remove('i')
             except ValueError:
-                raise Exception('Sorted array needs to have <i> field to be bale to sort')
+                raise Exception('Sorted array needs to have <i> field to be able to sort')
             self._cols = {k: [] for k in keys}
 
         def keys(self):
@@ -155,6 +155,35 @@ class CSVGenerator:
             idx = int(d.pop('i'))
             for k, v in d.items():
                 self._cols[k].append((idx, v))
+
+
+    class GroupedArray:
+        def __init__(self, regex):
+            self.regex = re.compile(regex)
+            keys = list(self.regex.groupindex.keys())
+            try:
+                keys.remove('key')
+            except ValueError:
+                raise Exception('Grouped array needs to have <key> field to be able to group')
+            self._cols = {k: [] for k in keys}
+
+        def keys(self):
+            return self._cols.keys()
+
+        def cols(self):
+            for k, v in self._cols.items():
+                yield (k, '|'.join(map(lambda x: '~'.join(map(str, x)), v)))
+
+        def search(self, line):
+            match = self.regex.search(line)
+            if not match:
+                return
+
+            d = match.groupdict()
+            key = int(d.pop('key'))
+            for k, v in d.items():
+                self._cols[k].append((key, v))
+
 
 
     def __init__(self, regexs):
