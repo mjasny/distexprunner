@@ -9,12 +9,13 @@ server_list = config.server_list[0, ]
 def csv_parser(servers):
     s = servers[0]
 
-    csvs = IterClassGen(CSVGenerator, [
+    csvs = IterClassGen(CSVGenerator,
         r'value=(?P<value>\d+)',    # catches only latest printed value
         CSVGenerator.Array(r'other=(?P<other>\d+)'), # collects all in a '|' separated array
         CSVGenerator.Sum(r'other=(?P<other_sum>\d+)'),
-        CSVGenerator.SortedArray(r'value=(?P<i>\d+),other=(?P<sorted_other>\d+)')
-    ])
+        CSVGenerator.SortedArray(r'value=(?P<i>\d+),other=(?P<sorted_other>\d+)'),
+        foobar=1234,
+    )
     s.run_cmd('for i in {10..1}; do echo "value=$i,other=$((i*2))"; done', stdout=next(csvs)).wait()
 
     for csv in csvs:

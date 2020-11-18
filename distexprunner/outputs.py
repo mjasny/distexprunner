@@ -3,6 +3,7 @@ import asyncio
 import os
 import copy
 import re
+from collections.abc import Iterable
 
 
 LOG_LEVEL_CMD = 100
@@ -124,7 +125,6 @@ class CSVGenerator:
     class Sum(Array):
         def cols(self):
             for k, v in self._cols.items():
-                print(v)
                 yield (k, str(sum(map(eval, v))))
 
 
@@ -186,9 +186,20 @@ class CSVGenerator:
 
 
 
-    def __init__(self, regexs):
+    def __init__(self, *args, **kwargs):
         self.__header = []
         self.__regexs = []
+        self.__manual = {}
+
+        self.add_columns(**kwargs)
+
+        def flatten(l):
+            for el in l:
+                if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
+                    yield from flatten(el)
+                else:
+                    yield el
+        regexs = list(flatten(args))
 
         for regex in copy.deepcopy(regexs):
             if isinstance(regex, str):
@@ -207,6 +218,14 @@ class CSVGenerator:
             regex.search(line)
 
 
+    def add_columns(self, **kwargs):
+        for key, val in kwargs.items():
+            if key in self.__header:
+                raise Exception(f'{key} already in header set {self.__header}')
+            self.__header.append(key)
+            self.__manual[key] = str(val)
+
+
     @property
     def header(self):
         return ','.join(self.__header)
@@ -214,6 +233,7 @@ class CSVGenerator:
     @property
     def row(self):
         columns = {k: v for regex in self.__regexs for k, v in regex.cols()}
+        columns.update(self.__manual)
 
         if len(columns.keys()) != len(self.__header):
             diff = set(self.__header)-set(columns.keys())
