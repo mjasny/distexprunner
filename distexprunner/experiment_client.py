@@ -146,7 +146,7 @@ class ExperimentClient:
 
             start = time.time()
 
-            restarts = range(max_restarts+1) if max_restarts != 0 else itertools.count(start=0) 
+            restarts = range(max_restarts) if max_restarts != 0 else itertools.count(start=0) 
             for _ in restarts:
                 try:
                     ret = experiment(servers, **params)

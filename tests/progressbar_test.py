@@ -42,11 +42,14 @@ class Progress:
             self.output.write('\033[1A\033[K')  # 1 up, clear line
 
         if status:
-            self.__write(f'{self.current_step} {INFO} {status}\n')
+            self.__write(f'{self.current_step} {INFO} {status}\033[K\n')
+            self.output.write('\033[K')
+            self.line_width = 0
+            self.render_bar()
         elif not error:
-            self.__write(f'{self.current_step} {CHECK_MARK}\n')
+            self.__write(f'{self.current_step} {CHECK_MARK}\033[K\n')
         else:
-            self.__write(f'{self.current_step} {RED_CROSS} => {error}\n')
+            self.__write(f'{self.current_step} {RED_CROSS} => {error}\033[K\n')
         
     
     def render_bar(self):
@@ -92,6 +95,9 @@ for i in range(max_steps):
     time.sleep(1.0)
     p.step_status(error="foobar")
     time.sleep(0.5)
+    if i % 2 == 1:
+        p.step_finish()
+        continue
     for _ in range(3):
         p.step_status(status=f"Retry {_}")
         time.sleep(0.5)
