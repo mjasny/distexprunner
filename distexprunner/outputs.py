@@ -121,6 +121,46 @@ class CSVGenerator:
                 self._cols[k].append(v)
 
 
+    class Percentile(Array):
+        def __init__(self, regex, percentile):
+            super().__init__(regex)
+            self._percentile = percentile
+            if not 0 <= percentile <= 1:
+                raise Exception('Percentile must be between 0 and 1')
+
+        def cols(self):
+            for k, v in self._cols.items():
+                if len(v) > 0:
+                    yield (k, str(sorted(map(eval, v))[int(len(v)*self._percentile)]))
+                else:
+                    yield (k, '0')
+
+
+    class Mean(Array):
+        def cols(self):
+            for k, v in self._cols.items():
+                if len(v) > 0:
+                    yield (k, str(sum(map(eval, v))/float(len(v))))
+                else:
+                    yield (k, '0')
+
+    class Max(Array):
+        def cols(self):
+            for k, v in self._cols.items():
+                if len(v) > 0:
+                    yield (k, str(max(map(eval, v))))
+                else:
+                    yield (k, '0')
+
+
+    class Min(Array):
+        def cols(self):
+            for k, v in self._cols.items():
+                if len(v) > 0:
+                    yield (k, str(min(map(eval, v))))
+                else:
+                    yield (k, '0')
+
 
     class Sum(Array):
         def cols(self):
