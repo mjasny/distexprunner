@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 
 def product(params):
+    params = {k: (v if isinstance(v, (Iterable, ComputedParam)) and not isinstance(v, (dict, str)) else (v, )) for k, v in params.items()}
     # filter out empty params
     params = {k: v for k, v in params.items() if len(v) != 0}
     keys = list(params.keys())
