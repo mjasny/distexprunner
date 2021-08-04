@@ -56,7 +56,6 @@ class ServerImpl(ServerInterface):
 
         try:
             pgid = os.getpgid(pid)
-            logging.info(f'running: {pid} {pgid} {running(pgid)}')
             if self.__sudo_is_passwordless():
                 logging.info(f'trying sudo-kill on: {uuid} {pid}')
                 subprocess.check_output(f'sudo kill -9 -{pgid}', shell=True)
