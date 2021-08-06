@@ -36,35 +36,35 @@ class ExperimentClient:
             else:
                 raise Exception(f'{path} is neither a file or directory.')
 
-
     def __read_folder(self, folder):
         logging.info(f'Reading folder: {folder.as_posix()}')
         for path in folder.glob('**/*.py'):
             self.__read_file(path)
 
-
     def __read_file(self, file):
         if self.__compatibility_mode:
             return self.__read_file_v1(file)
-        
+
         logging.info(f'Reading file: {file.as_posix()}')
 
         module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
-        spec = importlib.util.spec_from_file_location(module_name, file.as_posix())
+        spec = importlib.util.spec_from_file_location(
+            module_name, file.as_posix())
         module = importlib.util.module_from_spec(spec)
 
         sys.path.append(file.parent.as_posix())
         spec.loader.exec_module(module)
         sys.path.pop()
 
-
     def __read_file_v1(self, file):
         from v1_compatibility import experiment, config
 
-        logging.info(f'Reading file: {file.as_posix()} (in compatibility mode)')
+        logging.info(
+            f'Reading file: {file.as_posix()} (in compatibility mode)')
 
         module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
-        spec = importlib.util.spec_from_file_location(module_name, file.as_posix())
+        spec = importlib.util.spec_from_file_location(
+            module_name, file.as_posix())
         module = importlib.util.module_from_spec(spec)
 
         old_modules = sys.modules
@@ -77,20 +77,17 @@ class ExperimentClient:
         sys.path.pop()
 
         sys.modules = old_modules
-        
+
         for cls in module.__dict__.values():
             if isinstance(cls, type) and issubclass(cls, experiment.Base):
                 logging.info(f'Found experiment: {cls.__name__}')
                 proxy = experiment.Proxy(cls)
                 registry.reg_exp(proxy.server_list)(proxy)
 
-
-
     def __format_duration(self, s):
         hours, remainder = divmod(s, 3600)
         minutes, seconds = divmod(remainder, 60)
         return f'{hours:02.0f}:{minutes:02.0f}:{seconds:07.4f}'
-
 
     def run_experiments(self):
         resume_manager = ResumeManager()
@@ -101,7 +98,6 @@ class ExperimentClient:
 
         if self.__progress:
             self.__progressbar = Progress(len(experiments))
-
 
         def exception_handler(loop, context):
             loop.default_exception_handler(context)
@@ -114,7 +110,13 @@ class ExperimentClient:
                     logging.error(exception)
                 self.__raise = False
                 loop.stop()
-            
+
+        def ignore_exception_handler(loop, context):
+            exception = context.get('exception')
+            if isinstance(exception, BadReturnCode):
+                return
+            loop.default_exception_handler(context)
+
         loop = asyncio.get_event_loop()
 
         totalstart = time.time()
@@ -123,30 +125,34 @@ class ExperimentClient:
                 self.__progressbar.step_start(name)
 
             if self.__resume and resume_manager.was_run(experiment.__name__, params):
-                logging.info(f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
+                logging.info(
+                    f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
                 if self.__progress:
                     self.__progressbar.step_status(error=False)
                     self.__progressbar.step_finish()
                 continue
 
-            logging.info(f'Running experiment {i+1}/{len(experiments)} ({name})')
+            logging.info(
+                f'Running experiment {i+1}/{len(experiments)} ({name})')
 
             if raise_on_rc:
                 loop.set_exception_handler(exception_handler)
             else:
-                loop.set_exception_handler(None)
+                loop.set_exception_handler(ignore_exception_handler)
 
             try:
                 servers._connect_to_all()
             except AttributeError as e:
                 if self.__progress:
-                    self.__progressbar.step_status(error='Could not connect to servers')
+                    self.__progressbar.step_status(
+                        error='Could not connect to servers')
                     self.__progressbar.step_finish()
                 raise
 
             start = time.time()
 
-            restarts = range(max_restarts) if max_restarts != 0 else itertools.count(start=0) 
+            restarts = range(
+                max_restarts) if max_restarts != 0 else itertools.count(start=0)
             for _ in restarts:
                 try:
                     ret = experiment(servers, **params)
@@ -154,8 +160,9 @@ class ExperimentClient:
                     _, _, tb = sys.exc_info()
                     tb_info = traceback.extract_tb(tb)
                     filename, line, func, text = tb_info[-1]
-                    if self.__progress: # TODO remove all if self.__progress, enable output stream
-                        self.__progressbar.step_status(error=f'AssertionError {filename}:{line} -> {text}')
+                    if self.__progress:  # TODO remove all if self.__progress, enable output stream
+                        self.__progressbar.step_status(
+                            error=f'AssertionError {filename}:{line} -> {text}')
                         self.__progressbar.step_finish()
                     raise
                 except Exception as e:
@@ -167,26 +174,25 @@ class ExperimentClient:
                     break
                 logging.info(f'Restarting experiment {name}')
                 if self.__progress:
-                    self.__progressbar.step_status(status=f'Restarting... ({_+1})')
+                    self.__progressbar.step_status(
+                        status=f'Restarting... ({_+1})')
 
                 asyncio.sleep(1)
 
             servers._disconnect_from_all()
             resume_manager.add_run(experiment.__name__, params)
-            logging.info(f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
+            logging.info(
+                f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 
             if self.__progress:
                 self.__progressbar.step_status(error=False)
                 self.__progressbar.step_finish()
 
-
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
         resume_manager.reset()
-        
 
         self.__notifier.on_finish(len(experiments))
-
 
     def start(self):
         try:
@@ -211,5 +217,3 @@ class ExperimentClient:
                     loop.run_until_complete(task)
             logging.info(f'Cancelled {len(tasks)} running tasks.')
             loop.close()
-
-    
