@@ -19,18 +19,22 @@ class Console:
 
 
 class File:
-    def __init__(self, filename, append=False, flush=False):
+    def __init__(self, fileBase, *fileParts, append=False, flush=False):
+        filename = os.path.join(fileBase, *fileParts)
         mode = 'a' if append else 'w'
         self.file = open(filename, mode)
-        self.flush = flush
+        self.__flush = flush
 
     def __del__(self):
         self.file.close()
 
     def __call__(self, line):
         self.file.write(line)
-        if self.flush:
+        if self.__flush:
             self.file.flush()
+
+    def flush(self):
+        self.file.flush()
 
 
 class SubstrMatcher:
@@ -282,7 +286,8 @@ class CSVGenerator:
         return ','.join(map(lambda k: columns[k], self.__header))
 
 
-    def write(self, file):
+    def write(self, fileBase, *fileParts):
+        file = os.path.join(fileBase, *fileParts)
         write_header = not os.path.exists(file)
         with open(file, 'a+') as f:
             if write_header:

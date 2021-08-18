@@ -3,6 +3,9 @@ import logging
 import collections
 import uuid
 import socket
+import base64
+import hashlib
+import os
 
 from .enums import ReturnCode
 from ._client_impl import ClientImpl
@@ -39,6 +42,15 @@ class Server:
         task = self.__client.rpc.cd(directory)
         loop.run_until_complete(task)
 
+    def send_file(self, source, target):
+        loop = asyncio.get_event_loop()
+        with open(source, "rb") as source_file:
+            data = source_file.read()
+            checksum = hashlib.md5(data).hexdigest()
+            mode = os.stat(source).st_mode & 0o777
+            task = self.__client.rpc.send_file(base64.b64encode(data).decode('utf-8'), target, checksum, mode=mode)
+            loop.run_until_complete(task)
+            logging.info(f'{self.id}: Send file source={source} target={target} checksum={checksum}')
 
 
     def run_cmd(self, cmd, stdout=None, stderr=None, stdin=None, env={}, timeout=None):
