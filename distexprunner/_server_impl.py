@@ -6,6 +6,8 @@ import sys
 import signal
 import subprocess
 import atexit
+import base64
+import hashlib
 
 from ._server_interface import ServerInterface
 from ._client_interface import ClientInterface
@@ -62,6 +64,18 @@ class ServerImpl(ServerInterface):
     async def cd(self, directory):
         self.__cwd = directory
 
+    async def send_file(self, source, target, checksum, mode):
+        data = base64.b64decode(source)
+        checksumReceived = hashlib.md5(data).hexdigest()
+        logging.info(f'Received file source=... target={target} checksum={checksum} checksumReceived={checksumReceived} mode={mode}')
+
+        if checksum == checksumReceived:
+            target_path = os.path.join(self.__cwd, target)
+            with open(target_path, "wb") as target_file:
+                target_file.write(data)
+            os.chmod(target_path, mode)
+        else:
+            raise RuntimeError("Checksums of sent file do not match!")
     
     async def run_cmd(self, uuid, cmd, env={}):
         logging.info(f'uuid={uuid} cmd={cmd}')
