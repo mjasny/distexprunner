@@ -7,6 +7,11 @@ try:
 except ModuleNotFoundError: # for python3.7
     from asyncio.streams import IncompleteReadError
 
+try:
+    from asyncio.exceptions import LimitOverrunError
+except ModuleNotFoundError: # for python3.7
+    from asyncio.streams import LimitOverrunError
+
 
 def RPCWriter(RPCInterface):
     class Writer(RPCInterface):
@@ -45,16 +50,22 @@ class RPCReader:
 
     
     async def _read_loop(self):
+        data = bytearray()
         while True:
             if self.__writer.is_closing():
                 break
 
             try:
-                data = await self.__reader.readuntil(separator=b'\n')
+                data.extend(await self.__reader.readuntil(separator=b'\n'))
             except (IncompleteReadError, ConnectionResetError):
                 break
+            except LimitOverrunError:
+                logging.debug(f'Received data larger than buffer!')
+                data.extend(await self.__reader.read(1024))
+                continue
 
             json_data = json.loads(data[:-1])
+            data = bytearray()
             logging.debug(f'json: {json_data}')
 
             func = getattr(self.__impl, json_data['method'])
