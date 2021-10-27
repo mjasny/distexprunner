@@ -172,6 +172,14 @@ class CSVGenerator:
                 yield (k, str(sum(map(eval, v))))
 
 
+    class Optional(Default):
+        def cols(self):
+            for k, v in self._cols.items():
+                if v is None:
+                    yield (k, "")
+                else:
+                    yield (k, v)
+
     class SortedArray:
         def __init__(self, regex):
             self.regex = re.compile(regex)
