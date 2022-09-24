@@ -58,11 +58,11 @@ class Server:
         _uuid = str(uuid.uuid4())
 
         if stdout is not None:
-            stdout = stdout if isinstance(stdout, collections.Iterable) else [stdout]
+            stdout = stdout if isinstance(stdout, collections.abc.Iterable) else [stdout]
             self.__client._set_stdout(_uuid, stdout)
 
         if stderr is not None:
-            stderr = stderr if isinstance(stderr, collections.Iterable) else [stderr]
+            stderr = stderr if isinstance(stderr, collections.abc.Iterable) else [stderr]
             self.__client._set_stderr(_uuid, stderr)
 
 
