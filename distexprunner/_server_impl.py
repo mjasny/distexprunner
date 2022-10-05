@@ -14,7 +14,6 @@ from ._client_interface import ClientInterface
 from ._rpc import RPCReader, RPCWriter
 
 
-
 class ServerImpl(ServerInterface):
     def __init__(self, reader, writer):
         self.__rpc_reader = RPCReader(reader, writer, self)
@@ -33,13 +32,12 @@ class ServerImpl(ServerInterface):
         ).strip()
 
         atexit.register(self.__at_exit)
-    
+
     async def _on_disconnect(self):
         for uuid in self.__processes.keys():
             await self.kill_cmd(uuid)
 
         atexit.unregister(self.__at_exit)
-
 
     def __at_exit(self):
         num_procs = len(self.__processes)
@@ -53,21 +51,20 @@ class ServerImpl(ServerInterface):
                 pass
 
         logging.info(f'Killed {num_procs} running process')
-          
-    
+
     async def ping(self, *args, **kwargs):
         # await asyncio.sleep(0.1)
         self.pings += 1
         await self.rpc.pong(*args, **kwargs)
 
-    
     async def cd(self, directory):
         self.__cwd = directory
 
     async def send_file(self, source, target, checksum, mode):
         data = base64.b64decode(source)
         checksumReceived = hashlib.md5(data).hexdigest()
-        logging.info(f'Received file source=... target={target} checksum={checksum} checksumReceived={checksumReceived} mode={mode}')
+        logging.info(
+            f'Received file source=... target={target} checksum={checksum} checksumReceived={checksumReceived} mode={mode}')
 
         if checksum == checksumReceived:
             target_path = os.path.join(self.__cwd, target)
@@ -76,7 +73,7 @@ class ServerImpl(ServerInterface):
             os.chmod(target_path, mode)
         else:
             raise RuntimeError("Checksums of sent file do not match!")
-    
+
     async def run_cmd(self, uuid, cmd, env={}):
         logging.info(f'uuid={uuid} cmd={cmd}')
 
@@ -87,13 +84,11 @@ class ServerImpl(ServerInterface):
                     break
                 sys.stdout.write(line.decode('utf-8'))
                 await rpc(uuid, line.decode('utf-8'))
-                
-        
+
         environ = os.environ.copy()
         environ.update({k: str(v) for k, v in env.items()})
         environ['_STDBUF_O'] = 'L'
         environ['LD_PRELOAD'] = f'{environ.get("LD_PRELOAD", "")}:{self.__stdbuf_so}'
-     
 
         process = await asyncio.create_subprocess_shell(
             cmd,
@@ -111,11 +106,11 @@ class ServerImpl(ServerInterface):
             _read_stream(process.stdout, self.rpc.stdout),
             _read_stream(process.stderr, self.rpc.stderr)
         ])
+        await self.rpc.pid(uuid, p.pid)
         rc = await process.wait()
         logging.info(f'Got rc={rc} for: {repr(cmd)}')
         await self.rpc.rc(uuid, rc)
 
-    
     async def __process_startup(self, uuid):
         waits = 0
         while uuid not in self.__processes:
@@ -131,12 +126,11 @@ class ServerImpl(ServerInterface):
         try:
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
             logging.info(f'killed: {uuid} {self.__processes[uuid].pid}')
-        except ProcessLookupError:  #two kills
+        except ProcessLookupError:  # two kills
             #logging.info(f'could not find uuid={uuid} with pid={self.__processes[uuid].pid}')
             pass
             # TODO maybe send error to client
 
-    
     async def stdin_cmd(self, uuid, line, close=False):
         await self.__process_startup(uuid)
         p = self.__processes[uuid]

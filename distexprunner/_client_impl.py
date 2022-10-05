@@ -8,7 +8,6 @@ from ._client_interface import ClientInterface
 from ._rpc import RPCReader, RPCWriter
 
 
-
 class ClientImpl(ClientInterface):
     def __init__(self, reader, writer):
         self.__rpc_reader = RPCReader(reader, writer, self)
@@ -16,36 +15,37 @@ class ClientImpl(ClientInterface):
 
         self.pings = 0
         self.rc_futures = {}
+        self.pid_futures = {}
         self.stdout_handler = {}
         self.stderr_handler = {}
-    
+
     async def _on_disconnect(self):
         pass
         # logging.info(f'pings={self.pings}')
 
-    
     # TODO refactor out
+
     async def _run_cmd(self, uuid, cmd, env):
         loop = asyncio.get_running_loop()
         rc_future = loop.create_future()
-        
+        pid_future = loop.create_future()
+
         self.rc_futures[uuid] = rc_future
+        self.pid_futures[uuid] = pid_future
         await self.rpc.run_cmd(uuid, cmd, env=env)
 
-        return rc_future
+        return rc_future, pid_future
 
     def _set_stdout(self, uuid, handler):
         self.stdout_handler[uuid] = handler
 
     def _set_stderr(self, uuid, handler):
         self.stderr_handler[uuid] = handler
-            
-    
+
     async def pong(self, *args, **kwargs):
         # await asyncio.sleep(0.1)
         self.pings += 1
         await self.rpc.ping(*args, **kwargs)
-
 
     async def stdout(self, uuid, line):
         for handler in self.stdout_handler.get(uuid, []):
@@ -62,3 +62,9 @@ class ClientImpl(ClientInterface):
         logging.info(f'uuid={uuid} finished with exit code: {rc}')
         if rc != 0:
             raise BadReturnCode(rc)
+
+    async def pid(self, uuid, pid):
+        if uuid in self.pid_futures:
+            if not self.pid_futures[uuid].done():
+                self.pid_futures[uuid].set_result(pid)
+        logging.info(f'uuid={uuid} got pid: {pid}')

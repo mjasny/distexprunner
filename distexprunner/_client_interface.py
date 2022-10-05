@@ -11,3 +11,6 @@ class ClientInterface:
 
     async def rc(self, uuid, rc):
         raise NotImplementedError()
+
+    async def pid(self, uuid, pid):
+        raise NotImplementedError()
