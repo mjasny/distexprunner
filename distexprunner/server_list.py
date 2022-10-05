@@ -27,11 +27,9 @@ class ServerList:
         self.__loop = asyncio.get_event_loop()
         self.__working_directory = working_directory
 
-
-    def cd(self, directory):
+    def cd(self, directory='~/'):
         for s in self.__servers:
             s.cd(directory)
-
 
     def _connect_to_all(self):
         if not self.__servers:
@@ -40,17 +38,14 @@ class ServerList:
         self.__loop.run_until_complete(task)
         self.cd(self.__working_directory)
 
-
     def _disconnect_from_all(self):
         if not self.__servers:
             return
         task = asyncio.wait([s._disconnect() for s in self.__servers])
         self.__loop.run_until_complete(task)
 
-
     def wait_cmds_finish(self):
         raise NotImplementedError()
-
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -71,7 +66,7 @@ class ServerList:
             return ServerList(self.__getitem__(k) for k in key)
         else:
             raise Exception(f'Lookup type: {type(key)} not supported')
-        
+
     def __iter__(self):
         return iter(self.__servers)
 

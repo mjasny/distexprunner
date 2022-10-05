@@ -84,6 +84,9 @@ class Server:
         async def stdin_task(line, close):
             await rpc.stdin_cmd(_uuid, line, close)
 
+        async def signal_task(signal):
+            await rpc.signal_cmd(_uuid, signal)
+
         async def timeout_task():
             await asyncio.sleep(timeout)
             # if not rc:

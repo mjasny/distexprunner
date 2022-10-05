@@ -12,5 +12,8 @@ class ServerInterface:
     async def stdin_cmd(self, uuid, line, close=False):
         raise NotImplementedError()
 
+    async def signal_cmd(self, uuid, signal):
+        raise NotImplementedError()
+
     async def cd(self, directory):
         raise NotImplementedError

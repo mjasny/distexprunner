@@ -39,16 +39,40 @@ class ServerImpl(ServerInterface):
 
         atexit.unregister(self.__at_exit)
 
+    def __sudo_is_passwordless(self):
+        try:
+            subprocess.check_output('sudo -n true', shell=True)
+        except subprocess.CalledProcessError:
+            return False
+        else:
+            return True
+
+    def __mega_kill(self, uuid, pid):
+        def running(pgid):
+            try:
+                os.killpg(pgid, 0)
+            except OSError:
+                return False
+            else:
+                return True
+
+        try:
+            pgid = os.getpgid(pid)
+            if self.__sudo_is_passwordless():
+                logging.info(f'trying sudo-kill on: {uuid} {pid}')
+                subprocess.check_output(f'sudo kill -9 -{pgid}', shell=True)
+            else:
+                os.killpg(pgid, signal.SIGKILL)
+            logging.info(f'killed: {uuid} {pid}')
+        except ProcessLookupError:
+            #logging.info(f'could not find uuid={uuid} with pid={p.pid}')
+            pass
+
     def __at_exit(self):
         num_procs = len(self.__processes)
 
         for uuid, p in self.__processes.items():
-            try:
-                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
-                logging.info(f'killed: {uuid} {p.pid}')
-            except ProcessLookupError:
-                #logging.info(f'could not find uuid={uuid} with pid={p.pid}')
-                pass
+            self.__mega_kill(uuid, p.pid)
 
         logging.info(f'Killed {num_procs} running process')
 
@@ -90,14 +114,18 @@ class ServerImpl(ServerInterface):
         environ['_STDBUF_O'] = 'L'
         environ['LD_PRELOAD'] = f'{environ.get("LD_PRELOAD", "")}:{self.__stdbuf_so}'
 
+        cwd = os.path.expanduser(
+            self.__cwd) if self.__cwd is not None else self.__cwd
+
         process = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             env=environ,
-            cwd=self.__cwd,
-            start_new_session=True
+            cwd=cwd,
+            preexec_fn=os.setsid  # ,
+            # start_new_session=True
         )
         self.__processes[uuid] = process
         logging.info(f'Attach gdb: gdb -p {process.pid}')
@@ -122,6 +150,7 @@ class ServerImpl(ServerInterface):
 
     async def kill_cmd(self, uuid):
         await self.__process_startup(uuid)
+        self.__mega_kill(uuid, self.__processes[uuid].pid)
 
         try:
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
@@ -150,3 +179,14 @@ class ServerImpl(ServerInterface):
             await p.stdin.drain()
         except ConnectionResetError:
             logging.error(f'ConnectionResetError')
+
+    async def signal_cmd(self, uuid, signal):
+        await self.__process_startup(uuid)
+
+        p = self.__processes[uuid]
+        pgid = os.getpgid(p.pid)
+        if self.__sudo_is_passwordless():
+            subprocess.check_output(f'sudo kill -{signal} -{pgid}', shell=True)
+        else:
+            os.killpg(pgid, signal.SIGKILL)
+        logging.info(f'uuid={uuid} sent signal: {signal}')
