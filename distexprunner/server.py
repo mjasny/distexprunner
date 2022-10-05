@@ -43,12 +43,12 @@ class Server:
 
         if stdout is not None:
             stdout = stdout if isinstance(
-                stdout, collections.Iterable) else [stdout]
+                stdout, collections.abc.Iterable) else [stdout]
             self.__client._set_stdout(_uuid, stdout)
 
         if stderr is not None:
             stderr = stderr if isinstance(
-                stderr, collections.Iterable) else [stderr]
+                stderr, collections.abc.Iterable) else [stderr]
             self.__client._set_stderr(_uuid, stderr)
 
         task = self.__client._run_cmd(_uuid, cmd, env)

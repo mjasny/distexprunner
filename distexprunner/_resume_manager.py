@@ -9,10 +9,8 @@ class ResumeManager:
         self.already_run = set()
         if self.path.exists():
             with self.path.open('r') as f:
-                self.already_run = set(l for l in f.read().splitlines() if len(l) > 0)
-        
-
-
+                self.already_run = set(
+                    l for l in f.read().splitlines() if len(l) > 0)
 
     def was_run(self, exp, params):
         s = json.dumps({
@@ -20,7 +18,6 @@ class ResumeManager:
             'params': params
         }, sort_keys=True)
         return s in self.already_run
-
 
     def add_run(self, exp, params):
         s = json.dumps({
@@ -30,7 +27,6 @@ class ResumeManager:
         with self.path.open('a+') as f:
             f.write(f'{s}\n')
 
-    
     def reset(self):
         self.already_run = set()
         if self.path.exists():

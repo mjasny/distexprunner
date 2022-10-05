@@ -177,7 +177,7 @@ class ExperimentClient:
                     self.__progressbar.step_status(
                         status=f'Restarting... ({_+1})')
 
-                asyncio.sleep(1)
+                loop.run_until_complete(asyncio.sleep(1))
 
             servers._disconnect_from_all()
             resume_manager.add_run(experiment.__name__, params)
