@@ -47,6 +47,17 @@ class ServerList:
     def wait_cmds_finish(self):
         raise NotImplementedError()
 
+    @property
+    def unique_by_ip(self):
+        ips = set()
+        servers = []
+        for s in self.__servers:
+            if s.ip in ips:
+                continue
+            ips.add(s.ip)
+            servers.append(s)
+        return ServerList(servers)
+
     def __getitem__(self, key):
         if isinstance(key, int):
             try:

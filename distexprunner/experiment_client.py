@@ -120,11 +120,11 @@ class ExperimentClient:
         loop = asyncio.get_event_loop()
 
         totalstart = time.time()
-        for i, (name, servers, experiment, params, max_restarts, raise_on_rc) in enumerate(experiments):
+        for i, (name, servers, experiment, params, max_restarts, raise_on_rc, run_always) in enumerate(experiments):
             if self.__progress:
                 self.__progressbar.step_start(name)
 
-            if self.__resume and resume_manager.was_run(experiment.__name__, params):
+            if not run_always and self.__resume and resume_manager.was_run(experiment.__name__, params):
                 logging.info(
                     f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
                 if self.__progress:
@@ -180,7 +180,8 @@ class ExperimentClient:
                 loop.run_until_complete(asyncio.sleep(1))
 
             servers._disconnect_from_all()
-            resume_manager.add_run(experiment.__name__, params)
+            if not run_always:
+                resume_manager.add_run(experiment.__name__, params)
             logging.info(
                 f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 
@@ -190,7 +191,9 @@ class ExperimentClient:
 
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
-        resume_manager.reset()
+        if not self.__resume:
+            # keep history if resume is not set
+            resume_manager.reset()
 
         self.__notifier.on_finish(len(experiments))
 
