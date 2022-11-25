@@ -118,6 +118,9 @@ class Server:
             def async_stdin(self, line, close=False):
                 loop.create_task(rpc.stdin_cmd(_uuid, line, close=close))
 
+            def signal(self, signal):
+                loop.run_until_complete(signal_task(signal))
+
             @property
             def pid(self):
                 return loop.run_until_complete(pid_future)
