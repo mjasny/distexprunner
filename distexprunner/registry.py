@@ -13,14 +13,13 @@ class ExperimentStore:
         return ExperimentStore.__experiments
 
     @staticmethod
-    def add(*, name, servers, func, params, max_restarts, raise_on_rc):
+    def add(*, name, servers, func, params, max_restarts, raise_on_rc, run_always):
         ExperimentStore.__experiments.append(
-            (name, servers, func, params, max_restarts, raise_on_rc)
+            (name, servers, func, params, max_restarts, raise_on_rc, run_always)
         )
 
 
-
-def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
+def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_always=False):
     if not isinstance(servers, ServerList):
         raise Exception('Servers needs to be a ServerList')
 
@@ -38,10 +37,10 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
                     func=func,
                     params=p,
                     max_restarts=max_restarts,
-                    raise_on_rc=raise_on_rc
+                    raise_on_rc=raise_on_rc,
+                    run_always=run_always,
                 )
         return decorator_grid
-
 
     def decorator(func):
         ExperimentStore.add(
@@ -50,6 +49,7 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True):
             func=func,
             params={},
             max_restarts=max_restarts,
-            raise_on_rc=raise_on_rc
+            raise_on_rc=raise_on_rc,
+            run_always=run_always,
         )
     return decorator
