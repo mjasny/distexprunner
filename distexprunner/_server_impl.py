@@ -134,7 +134,7 @@ class ServerImpl(ServerInterface):
             _read_stream(process.stdout, self.rpc.stdout),
             _read_stream(process.stderr, self.rpc.stderr)
         ])
-        await self.rpc.pid(uuid, p.pid)
+        await self.rpc.pid(uuid, process.pid)
         rc = await process.wait()
         logging.info(f'Got rc={rc} for: {repr(cmd)}')
         await self.rpc.rc(uuid, rc)
