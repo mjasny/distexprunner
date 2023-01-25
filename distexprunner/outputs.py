@@ -69,13 +69,12 @@ class EnvParser:
         return self.__dict__[key]
 
 
-
 class CSVGenerator:
     """
     Generates CSV files from stdout/stderr.
     Takes a list of regexes with named groups, outputs csv to file or .header/.row.
     Use in conjuction with IterClassGen:
-    
+
     csvs = IterClassGen(CSVGenerator, [
         r'total_table_agents=(?P<total_table_agents>\d+)',
     ])
@@ -103,7 +102,6 @@ class CSVGenerator:
 
             self._cols.update(match.groupdict())
 
-
     class Array:
         def __init__(self, regex):
             self.regex = re.compile(regex)
@@ -124,7 +122,6 @@ class CSVGenerator:
             for k, v in match.groupdict().items():
                 self._cols[k].append(v)
 
-
     class Percentile(Array):
         def __init__(self, regex, percentile):
             super().__init__(regex)
@@ -138,7 +135,6 @@ class CSVGenerator:
                     yield (k, str(sorted(map(eval, v))[int(len(v)*self._percentile)]))
                 else:
                     yield (k, '0')
-
 
     class Mean(Array):
         def cols(self):
@@ -156,7 +152,6 @@ class CSVGenerator:
                 else:
                     yield (k, '0')
 
-
     class Min(Array):
         def cols(self):
             for k, v in self._cols.items():
@@ -165,12 +160,10 @@ class CSVGenerator:
                 else:
                     yield (k, '0')
 
-
     class Sum(Array):
         def cols(self):
             for k, v in self._cols.items():
                 yield (k, str(sum(map(eval, v))))
-
 
     class Optional(Default):
         def cols(self):
@@ -187,7 +180,8 @@ class CSVGenerator:
             try:
                 keys.remove('i')
             except ValueError:
-                raise Exception('Sorted array needs to have <i> field to be able to sort')
+                raise Exception(
+                    'Sorted array needs to have <i> field to be able to sort')
             self._cols = {k: [] for k in keys}
 
         def keys(self):
@@ -208,7 +202,6 @@ class CSVGenerator:
             for k, v in d.items():
                 self._cols[k].append((idx, v))
 
-
     class GroupedArray:
         def __init__(self, regex):
             self.regex = re.compile(regex)
@@ -216,7 +209,8 @@ class CSVGenerator:
             try:
                 keys.remove('key')
             except ValueError:
-                raise Exception('Grouped array needs to have <key> field to be able to group')
+                raise Exception(
+                    'Grouped array needs to have <key> field to be able to group')
             self._cols = {k: [] for k in keys}
 
         def keys(self):
@@ -224,7 +218,7 @@ class CSVGenerator:
 
         def cols(self):
             for k, v in self._cols.items():
-                yield (k, '|'.join(map(lambda x: '~'.join(map(str, x)), v)))
+                yield (k, '|'.join(map(lambda x: '~'.join(x), v)))
 
         def search(self, line):
             match = self.regex.search(line)
@@ -232,11 +226,9 @@ class CSVGenerator:
                 return
 
             d = match.groupdict()
-            key = int(d.pop('key'))
+            key = d.pop('key')
             for k, v in d.items():
                 self._cols[k].append((key, v))
-
-
 
     def __init__(self, *args, **kwargs):
         self.__header = []
@@ -256,19 +248,18 @@ class CSVGenerator:
         for regex in copy.deepcopy(regexs):
             if isinstance(regex, str):
                 regex = self.Default(regex)
-            
+
             for key in regex.keys():
                 if key in self.__header:
-                    raise Exception(f'{key} already in header set {self.__header}')
+                    raise Exception(
+                        f'{key} already in header set {self.__header}')
                 self.__header.append(key)
 
             self.__regexs.append(regex)
 
-
     def __call__(self, line):
         for regex in self.__regexs:
             regex.search(line)
-
 
     def add_columns(self, **kwargs):
         for key, val in kwargs.items():
@@ -276,7 +267,6 @@ class CSVGenerator:
                 raise Exception(f'{key} already in header set {self.__header}')
             self.__header.append(key)
             self.__manual[key] = str(val)
-
 
     @property
     def header(self):
@@ -290,9 +280,8 @@ class CSVGenerator:
         if len(columns.keys()) != len(self.__header):
             diff = set(self.__header)-set(columns.keys())
             raise Exception(f'Not enough values for row:\n{diff}')
-            
-        return ','.join(map(lambda k: columns[k], self.__header))
 
+        return ','.join(map(lambda k: columns[k], self.__header))
 
     def write(self, fileBase, *fileParts):
         file = os.path.join(fileBase, *fileParts)
