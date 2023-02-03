@@ -283,6 +283,17 @@ class CSVGenerator:
 
         return ','.join(map(lambda k: columns[k], self.__header))
 
+    @property
+    def as_dict(self):
+        columns = {k: v for regex in self.__regexs for k, v in regex.cols()}
+        columns.update(self.__manual)
+
+        if len(columns.keys()) != len(self.__header):
+            diff = set(self.__header)-set(columns.keys())
+            raise Exception(f'Not enough values for row:\n{diff}')
+
+        return columns
+
     def write(self, fileBase, *fileParts):
         file = os.path.join(fileBase, *fileParts)
         write_header = not os.path.exists(file)
