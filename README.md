@@ -27,11 +27,11 @@ At this stage you can already try the functionality by running locally the follo
 
 Start one server instance. If you need multiple on the same machine you need to specify a different port with `--port`. In general only one instance is needed because it is capable to run multiple commands and even experiments in parallel without interfering with eachother.
 
-`python -vv server.py`
+`python server.py -vv`
 
 Now a client is ready to connect to the servers and execute experiments.
 
-`python -vv client.py examples/`
+`python client.py -vv examples/`
 
 The folder parameter (`examples/`) is the search path for new experiments. It scans recursively all `.py` files for experiments which are registered with `@reg_exp(...)`. You can add multiple folders and also refer directly to a `.py` file if you want to run a subset of all experiments.
 
@@ -185,7 +185,7 @@ optional arguments:
   --compatibility-mode  Activate compatibiliy mode for class x(experiment.Base)
   --slack-webhook SLACK_WEBHOOK
                         Notify to slack when execution finishes
-  --progress            Display progressbar, but disables logging
+  --no-progress         Hide progressbar
   --log LOG             Log into file
 ```
 

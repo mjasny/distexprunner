@@ -1,5 +1,7 @@
 import functools
 import collections
+import inspect
+import os
 
 from .server_list import ServerList
 from .parameter_grid import ParameterGrid
@@ -13,15 +15,18 @@ class ExperimentStore:
         return ExperimentStore.__experiments
 
     @staticmethod
-    def add(*, name, servers, func, params, max_restarts, raise_on_rc, run_always):
+    def add(*, grp_name, name, servers, func, params, max_restarts, raise_on_rc, run_always):
         ExperimentStore.__experiments.append(
-            (name, servers, func, params, max_restarts, raise_on_rc, run_always)
+            (grp_name, name, servers, func, params,
+             max_restarts, raise_on_rc, run_always)
         )
 
 
 def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_always=False):
     if not isinstance(servers, ServerList):
         raise Exception('Servers needs to be a ServerList')
+
+    grp_name = os.path.basename(inspect.stack()[1].filename).rstrip('.py')
 
     if params:
         if not isinstance(params, ParameterGrid):
@@ -32,6 +37,7 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_alw
                 name = func.__name__+'__'+name
 
                 ExperimentStore.add(
+                    grp_name=grp_name,
                     name=name,
                     servers=servers,
                     func=func,
@@ -44,6 +50,7 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_alw
 
     def decorator(func):
         ExperimentStore.add(
+            grp_name=grp_name,
             name=func.__name__,
             servers=servers,
             func=func,

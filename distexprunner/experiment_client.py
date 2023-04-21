@@ -15,7 +15,7 @@ from .server_list import ServerList
 from .server import Server
 from .notification import Notifier
 from ._resume_manager import ResumeManager
-from ._progressbar import Progress
+from . import _progressbar as ProgressBar
 from ._exceptions import BadReturnCode
 
 
@@ -97,17 +97,15 @@ class ExperimentClient:
         logging.info(f'Total experiments: {len(experiments)}')
 
         if self.__progress:
-            self.__progressbar = Progress(len(experiments))
+            ProgressBar.enable_trapping()
+            ProgressBar.setup_scroll_area()
 
         def exception_handler(loop, context):
             loop.default_exception_handler(context)
 
             exception = context.get('exception')
             if isinstance(exception, BadReturnCode):
-                if self.__progress:
-                    self.__progressbar.step_status(error=exception)
-                else:
-                    logging.error(exception)
+                logging.error(exception)
                 self.__raise = False
                 loop.stop()
 
@@ -120,16 +118,15 @@ class ExperimentClient:
         loop = asyncio.get_event_loop()
 
         totalstart = time.time()
-        for i, (name, servers, experiment, params, max_restarts, raise_on_rc, run_always) in enumerate(experiments):
-            if self.__progress:
-                self.__progressbar.step_start(name)
+        for i, (grp_name, name, servers, experiment, params, max_restarts, raise_on_rc, run_always) in enumerate(experiments):
 
-            if not run_always and self.__resume and resume_manager.was_run(experiment.__name__, params):
+            exp_name = f'{grp_name}__{experiment.__name__}'
+
+            if not run_always and resume_manager.was_run(exp_name, params):
                 logging.info(
                     f'Experiment {i+1}/{len(experiments)} ({name}) was already run.')
                 if self.__progress:
-                    self.__progressbar.step_status(error=False)
-                    self.__progressbar.step_finish()
+                    ProgressBar.draw_progress_bar((i+1)*100//len(experiments))
                 continue
 
             logging.info(
@@ -142,11 +139,8 @@ class ExperimentClient:
 
             try:
                 servers._connect_to_all()
-            except AttributeError as e:
-                if self.__progress:
-                    self.__progressbar.step_status(
-                        error='Could not connect to servers')
-                    self.__progressbar.step_finish()
+            except Exception as e:
+                ProgressBar.destroy_scroll_area()
                 raise
 
             start = time.time()
@@ -156,44 +150,32 @@ class ExperimentClient:
             for _ in restarts:
                 try:
                     ret = experiment(servers, **params)
-                except AssertionError:
-                    _, _, tb = sys.exc_info()
-                    tb_info = traceback.extract_tb(tb)
-                    filename, line, func, text = tb_info[-1]
-                    if self.__progress:  # TODO remove all if self.__progress, enable output stream
-                        self.__progressbar.step_status(
-                            error=f'AssertionError {filename}:{line} -> {text}')
-                        self.__progressbar.step_finish()
-                    raise
                 except Exception as e:
-                    if self.__progress:
-                        self.__progressbar.step_status(error=e)
-                        self.__progressbar.step_finish()
+                    ProgressBar.destroy_scroll_area()
                     raise
                 if ret != Action.RESTART:
                     break
                 logging.info(f'Restarting experiment {name}')
-                if self.__progress:
-                    self.__progressbar.step_status(
-                        status=f'Restarting... ({_+1})')
 
                 loop.run_until_complete(asyncio.sleep(1))
 
             servers._disconnect_from_all()
             if not run_always:
-                resume_manager.add_run(experiment.__name__, params)
+                resume_manager.add_run(exp_name, params)
             logging.info(
                 f'Experiment {name} finished in {time.time()-start:.4f} seconds.')
 
             if self.__progress:
-                self.__progressbar.step_status(error=False)
-                self.__progressbar.step_finish()
+                ProgressBar.draw_progress_bar((i+1)*100//len(experiments))
 
         duration = self.__format_duration(time.time() - totalstart)
         logging.info(f'Finished {len(experiments)} experiments in {duration}')
-        if not self.__resume:
-            # keep history if resume is not set
-            resume_manager.reset()
+
+        if self.__progress:
+            ProgressBar.destroy_scroll_area()
+        # if not self.__resume:
+        #     # keep history if resume is not set
+        #     resume_manager.reset()
 
         self.__notifier.on_finish(len(experiments))
 
@@ -202,11 +184,9 @@ class ExperimentClient:
             self.run_experiments()
         except KeyboardInterrupt:
             logging.error('Terminating Client caused by Ctrl-C')
-            if self.__progress:
-                self.__progressbar.step_status(error='KeyboardInterrupt')
-                self.__progressbar.step_finish()
         except RuntimeError:
             if self.__raise:
+                ProgressBar.destroy_scroll_area()
                 raise
         finally:
             import asyncio
