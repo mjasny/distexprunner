@@ -26,8 +26,7 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_alw
     if not isinstance(servers, ServerList):
         raise Exception('Servers needs to be a ServerList')
 
-    filename = os.path.basename(inspect.stack()[1].filename)
-    grp_name = os.path.splitext(filename)[0]
+    grp_name = os.path.basename(inspect.stack()[1].filename).rstrip('.py')
 
     if params:
         if not isinstance(params, ParameterGrid):
