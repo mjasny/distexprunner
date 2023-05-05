@@ -81,10 +81,14 @@ class Server:
             await rpc.kill_cmd(_uuid)
             return await rc_future
 
-        async def stdin_task(line, close):
+        async def stdin_task(line, close, delay=None):
+            if delay is not None:
+                await asyncio.sleep(delay)
             await rpc.stdin_cmd(_uuid, line, close)
 
-        async def signal_task(signal):
+        async def signal_task(signal, delay=None):
+            if delay is not None:
+                await asyncio.sleep(delay)
             await rpc.signal_cmd(_uuid, signal)
 
         async def timeout_task():
@@ -112,14 +116,17 @@ class Server:
             def kill(self):
                 return loop.run_until_complete(kill_task())
 
-            def stdin(self, line, close=False):
-                loop.run_until_complete(stdin_task(line, close))
+            def stdin(self, line, close=False, delay=None):
+                loop.run_until_complete(stdin_task(line, close, delay))
 
-            def async_stdin(self, line, close=False):
-                loop.create_task(rpc.stdin_cmd(_uuid, line, close=close))
+            def async_stdin(self, line, close=False, delay=None):
+                loop.create_task(stdin_task(line, close, delay))
 
             def signal(self, signal):
                 loop.run_until_complete(signal_task(signal))
+
+            def async_signal(self, signal, delay=None):
+                loop.create_task(signal_task(signal, delay))
 
             @property
             def pid(self):
