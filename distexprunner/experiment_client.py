@@ -140,7 +140,8 @@ class ExperimentClient:
             try:
                 servers._connect_to_all()
             except Exception as e:
-                ProgressBar.destroy_scroll_area()
+                if self.__progress:
+                    ProgressBar.destroy_scroll_area()
                 raise
 
             start = time.time()
@@ -151,7 +152,8 @@ class ExperimentClient:
                 try:
                     ret = experiment(servers, **params)
                 except Exception as e:
-                    ProgressBar.destroy_scroll_area()
+                    if self.__progress:
+                        ProgressBar.destroy_scroll_area()
                     raise
                 if ret != Action.RESTART:
                     break
@@ -186,7 +188,8 @@ class ExperimentClient:
             logging.error('Terminating Client caused by Ctrl-C')
         except RuntimeError:
             if self.__raise:
-                ProgressBar.destroy_scroll_area()
+                if self.__progress:
+                    ProgressBar.destroy_scroll_area()
                 raise
         finally:
             import asyncio
