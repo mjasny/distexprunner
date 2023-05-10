@@ -131,6 +131,9 @@ class ProcessGroup:
     def __iter__(self):
         return iter(self.__procs)
 
+    def __getitem__(self, item):
+        return self.__procs[item]
+
 
 def run_on_all(servers, cmd, verify_rc=True):
     procs = ProcessGroup()
