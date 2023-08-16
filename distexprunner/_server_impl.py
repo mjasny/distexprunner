@@ -65,7 +65,7 @@ class ServerImpl(ServerInterface):
                 os.killpg(pgid, signal.SIGKILL)
             logging.info(f'killed: {uuid} {pid}')
         except ProcessLookupError:
-            #logging.info(f'could not find uuid={uuid} with pid={p.pid}')
+            # logging.info(f'could not find uuid={uuid} with pid={p.pid}')
             pass
 
     def __at_exit(self):
@@ -156,7 +156,7 @@ class ServerImpl(ServerInterface):
             os.killpg(os.getpgid(self.__processes[uuid].pid), signal.SIGKILL)
             logging.info(f'killed: {uuid} {self.__processes[uuid].pid}')
         except ProcessLookupError:  # two kills
-            #logging.info(f'could not find uuid={uuid} with pid={self.__processes[uuid].pid}')
+            # logging.info(f'could not find uuid={uuid} with pid={self.__processes[uuid].pid}')
             pass
             # TODO maybe send error to client
 

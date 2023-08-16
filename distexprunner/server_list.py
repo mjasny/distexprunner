@@ -34,14 +34,19 @@ class ServerList:
     def _connect_to_all(self):
         if not self.__servers:
             return
-        task = asyncio.wait([s._connect() for s in self.__servers])
+        # task = asyncio.wait([s._connect() for s in self.__servers])
+        tasks = [self.__loop.create_task(s._connect()) for s in self.__servers]
+        task = asyncio.wait(tasks)
         self.__loop.run_until_complete(task)
         self.cd(self.__working_directory)
 
     def _disconnect_from_all(self):
         if not self.__servers:
             return
-        task = asyncio.wait([s._disconnect() for s in self.__servers])
+        # task = asyncio.wait([s._disconnect() for s in self.__servers])
+        tasks = [self.__loop.create_task(s._disconnect())
+                 for s in self.__servers]
+        task = asyncio.wait(tasks)
         self.__loop.run_until_complete(task)
 
     def wait_cmds_finish(self):
