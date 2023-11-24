@@ -20,8 +20,7 @@ from ._exceptions import BadReturnCode
 
 
 class ExperimentClient:
-    def __init__(self, experiments, compatibility_mode, resume, notifier: Notifier, progress: bool):
-        self.__compatibility_mode = compatibility_mode
+    def __init__(self, experiments, resume, notifier: Notifier, progress: bool):
         self.__resume = resume
         self.__notifier = notifier
         self.__progress = progress
@@ -42,9 +41,6 @@ class ExperimentClient:
             self.__read_file(path)
 
     def __read_file(self, file):
-        if self.__compatibility_mode:
-            return self.__read_file_v1(file)
-
         logging.info(f'Reading file: {file.as_posix()}')
 
         module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
@@ -55,34 +51,6 @@ class ExperimentClient:
         sys.path.append(file.parent.as_posix())
         spec.loader.exec_module(module)
         sys.path.pop()
-
-    def __read_file_v1(self, file):
-        from v1_compatibility import experiment, config
-
-        logging.info(
-            f'Reading file: {file.as_posix()} (in compatibility mode)')
-
-        module_name = file.as_posix()[:-len(file.suffix)].replace('/', '.')
-        spec = importlib.util.spec_from_file_location(
-            module_name, file.as_posix())
-        module = importlib.util.module_from_spec(spec)
-
-        old_modules = sys.modules
-        sys.modules['time'] = experiment.time
-        sys.modules['experiment'] = experiment
-        sys.modules['config'] = config
-
-        sys.path.append(file.parent.as_posix())
-        spec.loader.exec_module(module)
-        sys.path.pop()
-
-        sys.modules = old_modules
-
-        for cls in module.__dict__.values():
-            if isinstance(cls, type) and issubclass(cls, experiment.Base):
-                logging.info(f'Found experiment: {cls.__name__}')
-                proxy = experiment.Proxy(cls)
-                registry.reg_exp(proxy.server_list)(proxy)
 
     def __format_duration(self, s):
         hours, remainder = divmod(s, 3600)

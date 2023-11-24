@@ -2,9 +2,6 @@
 
 A suite to write and run distributed experiments across multiple network nodes.
 
-* *Note: Old experiment syntax can still be read via `--compatibility-mode`*
-* *Note: Version 1 with `experiment.Base` is deprecated for writing new experiments.*
-
 
 ## Demo
 
@@ -171,7 +168,7 @@ Examples can be found in [examples/](./examples/).
 ## Client
 
 ```
-usage: client.py [-h] [-v] [--resume] [--compatibility-mode] [--slack-webhook SLACK_WEBHOOK] experiment [experiment ...]
+usage: client.py [-h] [-v] [--resume] [--slack-webhook SLACK_WEBHOOK] experiment [experiment ...]
 
 Distributed Experiment Runner Client Instance
 
@@ -182,7 +179,6 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         -v WARN -vv INFO -vvv DEBUG
   --resume              Resume execution of experiments from last run
-  --compatibility-mode  Activate compatibiliy mode for class x(experiment.Base)
   --slack-webhook SLACK_WEBHOOK
                         Notify to slack when execution finishes
   --no-progress         Hide progressbar
