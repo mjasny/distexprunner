@@ -47,4 +47,5 @@ def main():
     progress_bar.destroy_scroll_area()
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -12,7 +12,7 @@ from distexprunner.outputs import LOG_LEVEL_CMD
 __author__ = 'mjasny'
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Distributed Experiment Runner Client Instance')
     parser.add_argument('-v', '--verbose', action="count",
@@ -57,3 +57,7 @@ if __name__ == '__main__':
         progress=not args.no_progress,
     )
     client.start()
+
+
+if __name__ == '__main__':
+    main()

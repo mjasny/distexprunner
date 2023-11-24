@@ -9,22 +9,17 @@ A suite to write and run distributed experiments across multiple network nodes.
 
 
 ## Installation
-
-The best way to integrate distexprunner in a project is to add it as a submodule:
-
 ```
-mkdir distexperiments/ && cd distexperiments/
-git submodule add https://github.com/mjasny/distexprunner
-cp -r distexprunner/examples .
+python3 -m venv venv
+source venv/bin/activate
+pip install git+https://github.com/melhindi/distexprunner.git@master
 ```
-
-*Note: For readability, all commands only list the required executeable instead of the full path. In this current setup the server command would correspond to: `python3 distexprunner/{server,client}.py`*.
 
 At this stage you can already try the functionality by running locally the following commands in different shells. (e.g. using `tmux`)
 
 Start one server instance. If you need multiple on the same machine you need to specify a different port with `--port`. In general only one instance is needed because it is capable to run multiple commands and even experiments in parallel without interfering with eachother.
 
-`python server.py -vv`
+`distexp-server -vv`
 
 Now a client is ready to connect to the servers and execute experiments.
 
@@ -33,7 +28,6 @@ Now a client is ready to connect to the servers and execute experiments.
 The folder parameter (`examples/`) is the search path for new experiments. It scans recursively all `.py` files for experiments which are registered with `@reg_exp(...)`. You can add multiple folders and also refer directly to a `.py` file if you want to run a subset of all experiments.
 
 The order of the arguments is used as an execution order. This might be useful to do compilation jobs beforehand: `python client.py -vv compile.py scaleout.py`.
-
 
 
 ## Writing experiments
@@ -208,4 +202,11 @@ optional arguments:
   -mi MAX_IDLE, --max-idle MAX_IDLE
                         Maximum idle time before auto termination (in seconds). Default 1 hour.
   -o LOG, --log LOG     Log into file
+```
+
+## Development
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -e .
 ```
