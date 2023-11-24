@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import shlex
 import os
 import sys
 import signal

@@ -1,5 +1,4 @@
 import asyncio
-from multiprocessing.dummy import Process
 import sys
 import tty
 import termios

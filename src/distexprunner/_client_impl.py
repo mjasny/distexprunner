@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 
 from ._exceptions import BadReturnCode
 from ._server_interface import ServerInterface

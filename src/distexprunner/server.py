@@ -2,7 +2,6 @@ import asyncio
 import logging
 import collections
 import uuid
-import socket
 import base64
 import hashlib
 import os

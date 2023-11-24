@@ -8,10 +8,10 @@ import time
 # autopep8: off
 import sys
 import os
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
 # Import the progress bar
 from distexprunner import _progressbar as progress_bar
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
 # autopep8: on
 
 
@@ -26,7 +26,7 @@ def generate_some_output_and_sleep():
     print(random_string())
     print(random_string())
     print(random_string())
-    print("\n\n------------------------------------------------------------------")
+    print("\n\n--------------------------------------------------------------")
     print("\n\n Now sleeping briefly")
     time.sleep(0.3)
 

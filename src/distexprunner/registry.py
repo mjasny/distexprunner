@@ -1,5 +1,3 @@
-import functools
-import collections
 import inspect
 import os
 
@@ -26,7 +24,8 @@ def reg_exp(servers=None, params=None, max_restarts=0, raise_on_rc=True, run_alw
     if not isinstance(servers, ServerList):
         raise Exception('Servers needs to be a ServerList')
 
-    grp_name = os.path.splitext(os.path.basename(inspect.stack()[1].filename))[0]
+    grp_name = os.path.splitext(
+        os.path.basename(inspect.stack()[1].filename))[0]
 
     if params:
         if not isinstance(params, ParameterGrid):

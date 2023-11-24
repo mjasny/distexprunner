@@ -4,12 +4,12 @@ import json
 
 try:
     from asyncio.exceptions import IncompleteReadError
-except ModuleNotFoundError: # for python3.7
+except ModuleNotFoundError:  # for python3.7
     from asyncio.streams import IncompleteReadError
 
 try:
     from asyncio.exceptions import LimitOverrunError
-except ModuleNotFoundError: # for python3.7
+except ModuleNotFoundError:  # for python3.7
     from asyncio.streams import LimitOverrunError
 
 
@@ -30,16 +30,16 @@ def RPCWriter(RPCInterface):
                 except ConnectionResetError:
                     return False
                 return True
-            
+
             return func
-    
+
     return Writer
 
 
 class RPCReader:
     def __init__(self, reader, writer, impl):
         self.__reader = reader
-        self.__writer = writer 
+        self.__writer = writer
         self.__impl = impl
 
         addr = writer.get_extra_info('peername')
@@ -48,7 +48,6 @@ class RPCReader:
         loop = asyncio.get_running_loop()
         loop.create_task(self._read_loop())
 
-    
     async def _read_loop(self):
         data = bytearray()
         while True:
@@ -69,8 +68,9 @@ class RPCReader:
             logging.debug(f'json: {json_data}')
 
             func = getattr(self.__impl, json_data['method'])
-            # await func(*json_data['args'], **json_data['kwargs']) 
-            asyncio.create_task(func(*json_data['args'], **json_data['kwargs']) )
+            # await func(*json_data['args'], **json_data['kwargs'])
+            asyncio.create_task(
+                func(*json_data['args'], **json_data['kwargs']))
 
         self.__writer.close()
         try:

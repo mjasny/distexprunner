@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import types
 from collections.abc import Iterable
 

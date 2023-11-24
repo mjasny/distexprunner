@@ -3,16 +3,12 @@ import asyncio
 import logging
 import pathlib
 import sys
-import traceback
-import os
 import importlib.util
 import itertools
 import time
 
 from . import registry
 from .enums import Action
-from .server_list import ServerList
-from .server import Server
 from .notification import Notifier
 from ._resume_manager import ResumeManager
 from . import _progressbar as ProgressBar

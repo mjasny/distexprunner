@@ -6,7 +6,6 @@ import functools
 import asyncio
 
 
-
 class StdinController:
     def __init__(self):
         self.cmds = {}
@@ -18,11 +17,9 @@ class StdinController:
         self.__stop_future = self.__loop.create_future()
         self.__input = ''
 
-
     def add(self, server_id, _uuid, cmd, rpc):
         self.__log(f'Added cmd={cmd} uuid={_uuid} to controller')
         self.cmds[_uuid] = (server_id, cmd, rpc)
-
 
     def __menu(self, select=None):
         self.__cmd = None
@@ -37,12 +34,13 @@ class StdinController:
             self.__log(f'Please select command from the list.')
             for i, (uuid, (server_id, cmd, _)) in enumerate(self.cmds.items()):
                 self.__log(f'\t[{i}] {server_id}: {repr(cmd)}')
-                self.__log(f'\t{" "*(len(server_id)+len(str(i))+5)}uuid={uuid}')
+                self.__log(
+                    f'\t{" "*(len(server_id)+len(str(i))+5)}uuid={uuid}')
 
             sys.stdout.write('Enter selection: ')
             sys.stdout.flush()
             return
-        
+
         try:
             index = int(select)
         except ValueError:
@@ -64,19 +62,18 @@ class StdinController:
         sys.stdout.write('\n\r')
         self.__log(f'Opening to stdin of cmd={repr(cmd)} on {server_id}')
 
-
-
     def __on_stdin(self):
         c = sys.stdin.read(1)
 
         if c == '\x03':     # Ctrl-C
             self.__stop_future.set_result(None)
-        elif c == '\x08': # Ctrl-H:
+        elif c == '\x08':  # Ctrl-H:
             self.__menu()
         elif c == '\x04':   # Ctrl-D
             if self.__cmd is not None:
                 _, _, rpc = self.cmds[self.__cmd]
-                self.__loop.create_task(rpc.stdin_cmd(self.__cmd, '', close=True))
+                self.__loop.create_task(
+                    rpc.stdin_cmd(self.__cmd, '', close=True))
                 self.__stop_future.set_result(None)
                 self.__input = ''
         elif c == '\x7f':   # Backspace
@@ -85,7 +82,8 @@ class StdinController:
         elif c == '\r':     # Enter
             if self.__cmd is not None:
                 _, _, rpc = self.cmds[self.__cmd]
-                self.__loop.create_task(rpc.stdin_cmd(self.__cmd, f'{self.__input}\n', close=False))
+                self.__loop.create_task(rpc.stdin_cmd(
+                    self.__cmd, f'{self.__input}\n', close=False))
                 self.__input = ''
                 sys.stdout.write('\r\n')
             else:
@@ -97,7 +95,6 @@ class StdinController:
             sys.stdout.write(c)
 
         sys.stdout.flush()
-
 
     def wait(self):
         self.__menu()
