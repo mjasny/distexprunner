@@ -20,5 +20,5 @@ classifiers = [
 ]
 
 [project.scripts]
-distexp-server = "bin.server:main"
-distexp-client = "bin.client:main"
+distexp-server = "bin.distexp_server:main"
+distexp-client = "bin.distexp_client:main"

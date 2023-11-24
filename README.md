@@ -12,7 +12,7 @@ A suite to write and run distributed experiments across multiple network nodes.
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install git+https://github.com/melhindi/distexprunner.git@master
+pip install --upgrade https://github.com/melhindi/distexprunner/archive/master.zip
 ```
 
 At this stage you can already try the functionality by running locally the following commands in different shells. (e.g. using `tmux`)
@@ -100,7 +100,7 @@ Kills the running process and returns a returncode.
 
 Feeds a string into stdin of the running command. `\n` is needed at the end to simulate an ENTER keypress. If `close=True` then the stdin to the process is closed.
 
-### Experiment behaviour
+### Experiment behavior 
 
 If the `experiment()` function returns before running commands are terminated they are killed. So it is advised to use `.wait()` calls on running commands.
 
@@ -159,7 +159,7 @@ experiments = [
 Examples can be found in [examples/](./examples/).
 
 
-## Client
+### Client
 
 ```
 usage: client.py [-h] [-v] [--resume] [--slack-webhook SLACK_WEBHOOK] experiment [experiment ...]
@@ -186,7 +186,7 @@ optional arguments:
 - `--log` Appends all logging output in addition to stderr into a file.
 
 
-## Server
+### Server
 
 ```
 usage: server.py [-h] [-v] [-ip IP] [-p PORT] [-rf] [-mi MAX_IDLE]
@@ -205,8 +205,16 @@ optional arguments:
 ```
 
 ## Development
+
+### Editable installation
 ```
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
+```
+
+### Code formatting
+```
+pip install --upgrade autopep8
+autopep8 --in-place --recursive .
 ```
