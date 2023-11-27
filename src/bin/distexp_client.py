@@ -12,15 +12,13 @@ from distexprunner.outputs import LOG_LEVEL_CMD
 __author__ = 'mjasny'
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Distributed Experiment Runner Client Instance')
     parser.add_argument('-v', '--verbose', action="count",
                         default=0, help='-v WARN -vv INFO -vvv DEBUG')
     parser.add_argument('--resume', action='store_true',
                         help='Resume execution of experiments from last run')
-    parser.add_argument('--compatibility-mode', action='store_true', default=False,
-                        help='Activate compatibiliy mode for class x(experiment.Base)')
     parser.add_argument('--slack-webhook', type=str,
                         help='Notify to slack when execution finishes')
     parser.add_argument('--no-progress', action='store_true',
@@ -54,9 +52,12 @@ if __name__ == '__main__':
 
     client = ExperimentClient(
         experiments=args.experiment,
-        compatibility_mode=args.compatibility_mode,
         resume=args.resume,
         notifier=notifier,
         progress=not args.no_progress,
     )
     client.start()
+
+
+if __name__ == '__main__':
+    main()
