@@ -12,7 +12,7 @@ A suite to write and run distributed experiments across multiple network nodes.
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install --upgrade https://github.com/melhindi/distexprunner/archive/master.zip
+pip install --upgrade https://github.com/mjasny/distexprunner/archive/master.zip
 ```
 
 At this stage you can already try the functionality by running locally the following commands in different shells. (e.g. using `tmux`)
