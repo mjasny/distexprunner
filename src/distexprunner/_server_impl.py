@@ -130,8 +130,8 @@ class ServerImpl(ServerInterface):
         logging.info(f'Attach gdb: gdb -p {process.pid}')
 
         await asyncio.wait([
-            _read_stream(process.stdout, self.rpc.stdout),
-            _read_stream(process.stderr, self.rpc.stderr)
+            asyncio.create_task(_read_stream(process.stdout, self.rpc.stdout)),
+            asyncio.create_task(_read_stream(process.stderr, self.rpc.stderr))
         ])
         await self.rpc.pid(uuid, process.pid)
         rc = await process.wait()
