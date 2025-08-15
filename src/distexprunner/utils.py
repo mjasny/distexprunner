@@ -5,6 +5,7 @@ import termios
 import logging
 import itertools
 import functools
+from .enums import ReturnCode
 
 
 __all__ = ['GDB', 'SOCKET_BIND', 'sleep', 'forward_stdin_to',
@@ -123,6 +124,10 @@ class ProcessGroup:
             assert (all(rc == 0 for rc in rcs))
         return rcs
 
+    def has_timeout(self):
+        rcs = [p.wait() for p in self.__procs]
+        return any(rc == ReturnCode.TIMEOUT for rc in rcs)
+
     def signal(self, signal):
         for p in self.__procs:
             p.signal(signal)
@@ -134,8 +139,8 @@ class ProcessGroup:
         return self.__procs[item]
 
 
-def run_on_all(servers, cmd, verify_rc=True):
+def run_on_all(servers, cmd, verify_rc=True, env={}):
     procs = ProcessGroup()
     for s in servers:
-        procs.add(s.run_cmd(cmd))
+        procs.add(s.run_cmd(cmd, env=env))
     return procs.wait(verify_rc=verify_rc)

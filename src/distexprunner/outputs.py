@@ -76,7 +76,7 @@ class CSVGenerator:
     Use in conjuction with IterClassGen:
 
     csvs = IterClassGen(CSVGenerator, [
-        r'total_table_agents=(?P<total_table_agents>\d+)',
+        r'total_table_agents=(?P<total_table_agents>\\d+)',
     ])
     s.run_cmd('bin', stdout=next(csvs)).wait()
     for csv in csvs:
