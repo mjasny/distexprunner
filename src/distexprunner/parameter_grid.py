@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Iterable
+import copy
 
 
 def product(params):
@@ -35,6 +36,11 @@ class ParameterGrid:
     def get(self):
         for params in product(self.__params):
             yield params, '_'.join(f'{k}={v}' for k, v in params.items())
+
+    def update(self, **kwargs):
+        params = copy.deepcopy(self.__params)
+        params.update(**kwargs)
+        return ParameterGrid(**params)
 
 
 class ComputedParam:

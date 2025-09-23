@@ -274,17 +274,11 @@ class CSVGenerator:
 
     @property
     def row(self):
-        columns = {k: v for regex in self.__regexs for k, v in regex.cols()}
-        columns.update(self.__manual)
-
-        if len(columns.keys()) != len(self.__header):
-            diff = set(self.__header)-set(columns.keys())
-            raise Exception(f'Not enough values for row:\n{diff}')
-
-        return ','.join(map(lambda k: columns[k], self.__header))
+        return ','.join(self.as_dict.values())
 
     @property
     def as_dict(self):
+        # from python3.7 dicts are insertion ordered
         columns = {k: v for regex in self.__regexs for k, v in regex.cols()}
         columns.update(self.__manual)
 
