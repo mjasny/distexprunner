@@ -118,14 +118,14 @@ class ProcessGroup:
     def add(self, p):
         self.__procs.append(p)
 
-    def wait(self, verify_rc=True):
-        rcs = [p.wait() for p in self.__procs]
+    def wait(self, block=True, verify_rc=True):
+        rcs = [p.wait(block=True) for p in self.__procs]
         if verify_rc:
             assert (all(rc == 0 for rc in rcs))
         return rcs
 
-    def has_timeout(self):
-        rcs = [p.wait() for p in self.__procs]
+    def has_timeout(self, block=True):
+        rcs = [p.wait(block=block) for p in self.__procs]
         return any(rc == ReturnCode.TIMEOUT for rc in rcs)
 
     def signal(self, signal):

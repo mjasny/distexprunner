@@ -270,7 +270,7 @@ class CSVGenerator:
 
     @property
     def header(self):
-        return ','.join(self.__header)
+        return ','.join(self.as_dict.keys())
 
     @property
     def row(self):
