@@ -173,8 +173,7 @@ class ServerImpl(ServerInterface):
         environ["_STDBUF_O"] = "L"
         if self.__stdbuf_so:
             ld = environ.get("LD_PRELOAD", "")
-            environ["LD_PRELOAD"] = f"{ld}:{
-                self.__stdbuf_so}" if ld else self.__stdbuf_so
+            environ["LD_PRELOAD"] = f"{ld}:{self.__stdbuf_so}" if ld else self.__stdbuf_so
 
         cwd = os.path.expanduser(self.__cwd) if self.__cwd else None
 
